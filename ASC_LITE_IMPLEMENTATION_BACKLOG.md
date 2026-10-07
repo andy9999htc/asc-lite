@@ -19,6 +19,38 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 4. M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
 5. M4 - Stabilisierung + Testabschluss
 
+## 2a) Test-Policy (verbindlich)
+
+1. Jede Implementierungsaufgabe wird von Anfang an mit Tests umgesetzt (test-first oder test-parallel im selben Task).
+2. Pro Ticket gilt: kein "done" ohne mindestens einen passenden Testfall (Unit oder Integration) und lokalen Lauf.
+3. `standalone_asc_lite_test.py` wird pro Phase mit gepflegt, damit Kernlogik ohne HA lokal pruefbar bleibt.
+4. Vor Merge in `main`: `pytest -q` muss gruen sein.
+
+## 2b) Testaktivitaeten pro Phase
+
+### M0 - Skeleton + Config
+- Config-/Model-Validierungstests (`tests/test_models.py`) fuer Pflichtfelder, Skalen, Inversion, Hysterese.
+- Standalone-Skript validiert Env-basierte Konfiguration ohne HA.
+
+### M1 - Core Decision Engine
+- Unit-Tests fuer Position/Normalisierung und Prioritaetsentscheidungen (`tests/test_position.py`, spaeter `tests/test_priority.py`).
+- Standalone-Skript erweitert um Engine-Samples (Decision Dry-Run ohne Dispatch).
+
+### M2 - Dispatch + Manual Block
+- Unit-Tests fuer Dedupe, Marker-Handling und Manual-Block-Semantik.
+- Restart-/Persistenztests fuer Block-Expiry (Storage Restore).
+- Standalone-Skript erweitert um Dispatch-Simulation (ohne echten HA Service Call).
+
+### M3 - MVP Rules
+- Regeltests gegen Decision-Table IDs (R-WIN, R-PARTY, R-ASTRO, R-PRES, R-LUX).
+- Integrationsnahe Flow-Tests fuer Pilot-Shutter inkl. Zeitfenster und Inversion.
+- Standalone-Skript erweitert um regelbezogene Szenarien per Env-Profil.
+
+### M4 - Stabilisierung + Abschluss
+- Vollstaendiger Lauf aller Unit- und Integrations-Tests.
+- Mapping der Tests auf `ASC_LITE_MVP_TESTPLAN.md` (T-001..T-022) inkl. Evidenz.
+- 7-Tage Pilotnachweis dokumentiert.
+
 ## 3) Backlog (priorisiert)
 
 ## M0 - Skeleton + Config
@@ -293,6 +325,13 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 15. B-016
 16. B-017
 17. B-018
+
+Test-Gates pro Reihenfolgeblock:
+- Nach B-003: Config/Model Tests + Standalone Check muessen gruen sein.
+- Nach B-006: Engine-Basis-Tests (Position/Priority/State) muessen gruen sein.
+- Nach B-008: Dispatch/Manual Tests muessen gruen sein.
+- Nach B-015: Regeltests + Diagnose-Checks muessen gruen sein.
+- Nach B-018: Volltest inkl. Pilot-Evidenz abgeschlossen.
 
 ## 6) Risks and Mitigations
 
