@@ -1,0 +1,64 @@
+{
+  "title": "ASC Lite",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Create ASC Lite entry",
+        "description": "Configure global entities and behavior.",
+        "data": {
+          "name": "Name",
+          "sun_entity_id": "Sun entity ID",
+          "presence_entity_id": "Presence entity ID",
+          "auto_enabled_entity_id": "Auto enabled helper entity ID",
+          "party_mode_entity_id": "Party mode helper entity ID",
+          "terrace_window_entity_id": "Terrace window entity ID (optional)",
+          "outdoor_temp_entity_id": "Outdoor temperature entity ID (optional)",
+          "lux_wz_entity_id": "Living room lux entity ID (optional)",
+          "lux_ez_entity_id": "Dining room lux entity ID (optional)",
+          "invert_positions_global": "Invert positions globally",
+          "manual_block_seconds": "Manual block duration (seconds)"
+        }
+      },
+      "covers": {
+        "title": "Configure covers",
+        "description": "Paste a JSON array with per-cover configuration.",
+        "data": {
+          "covers_json": "Covers JSON"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "ASC Lite is already configured",
+      "entity_not_found": "One or more required entity IDs do not exist",
+      "invalid_covers_json": "Invalid covers JSON",
+      "invalid_cover_settings": "Covers JSON failed validation"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ASC Lite options",
+        "description": "Update global entities and behavior.",
+        "data": {
+          "name": "Name",
+          "sun_entity_id": "Sun entity ID",
+          "presence_entity_id": "Presence entity ID",
+          "auto_enabled_entity_id": "Auto enabled helper entity ID",
+          "party_mode_entity_id": "Party mode helper entity ID",
+          "terrace_window_entity_id": "Terrace window entity ID (optional)",
+          "outdoor_temp_entity_id": "Outdoor temperature entity ID (optional)",
+          "lux_wz_entity_id": "Living room lux entity ID (optional)",
+          "lux_ez_entity_id": "Dining room lux entity ID (optional)",
+          "invert_positions_global": "Invert positions globally",
+          "manual_block_seconds": "Manual block duration (seconds)",
+          "covers_json": "Covers JSON"
+        }
+      }
+    },
+    "error": {
+      "entity_not_found": "One or more required entity IDs do not exist",
+      "invalid_covers_json": "Invalid covers JSON",
+      "invalid_cover_settings": "Covers JSON failed validation"
+    }
+  }
+}
