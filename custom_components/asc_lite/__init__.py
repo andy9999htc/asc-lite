@@ -5,8 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+try:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+except ModuleNotFoundError:  # pragma: no cover - enables standalone local tests
+    ConfigEntry = Any  # type: ignore[assignment]
+    HomeAssistant = Any  # type: ignore[assignment]
 
 from .const import DOMAIN, LOGGER_NAME
 from .models import build_runtime_config

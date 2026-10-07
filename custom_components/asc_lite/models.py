@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
-
-from homeassistant.config_entries import ConfigEntry
+from typing import Any, Protocol
 
 from .const import (
     ALLOWED_COVER_SCALES,
@@ -39,6 +37,14 @@ from .const import (
 
 class ConfigValidationError(ValueError):
     """Raised when runtime configuration is invalid."""
+
+
+class EntryLike(Protocol):
+    """Minimal config entry contract needed by build_runtime_config."""
+
+    data: dict[str, Any]
+    options: dict[str, Any]
+    title: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,7 +132,7 @@ class GlobalConfig:
             raise ConfigValidationError("At least one cover must be configured")
 
 
-def build_runtime_config(entry: ConfigEntry) -> GlobalConfig:
+def build_runtime_config(entry: EntryLike) -> GlobalConfig:
     """Build and validate runtime config from config entry data/options."""
     merged: dict[str, Any] = {**entry.data, **entry.options}
 
@@ -179,11 +185,17 @@ def build_runtime_config(entry: ConfigEntry) -> GlobalConfig:
         outdoor_temp_entity_id=_optional_string(merged.get(CONF_OUTDOOR_TEMP_ENTITY_ID)),
         lux_wz_entity_id=_optional_string(merged.get(CONF_LUX_WZ_ENTITY_ID)),
         lux_ez_entity_id=_optional_string(merged.get(CONF_LUX_EZ_ENTITY_ID)),
-        invert_positions_global=bool(
-            merged.get(CONF_INVERT_POSITIONS_GLOBAL, DEFAULT_INVERT_POSITIONS_GLOBAL)
+        invert_positions_global=_require_bool(
+            merged,
+            CONF_INVERT_POSITIONS_GLOBAL,
+            "global",
+            default=DEFAULT_INVERT_POSITIONS_GLOBAL,
         ),
-        manual_block_seconds=int(
-            merged.get(CONF_MANUAL_BLOCK_SECONDS, DEFAULT_MANUAL_BLOCK_SECONDS)
+        manual_block_seconds=_require_positive_int(
+            merged,
+            CONF_MANUAL_BLOCK_SECONDS,
+            "global",
+            default=DEFAULT_MANUAL_BLOCK_SECONDS,
         ),
         covers=tuple(covers),
     )
@@ -209,6 +221,33 @@ def _require_int(data: dict[str, Any], key: str, section: str) -> int:
     value = data.get(key)
     if not isinstance(value, int):
         raise ConfigValidationError(f"{section}.{key} must be an integer")
+    return value
+
+
+def _require_positive_int(
+    data: dict[str, Any], key: str, section: str, *, default: int | None = None
+) -> int:
+    value = data.get(key, default)
+    if isinstance(value, bool):
+        raise ConfigValidationError(f"{section}.{key} must be an integer")
+    if isinstance(value, int):
+        result = value
+    elif isinstance(value, float) and value.is_integer():
+        result = int(value)
+    else:
+        raise ConfigValidationError(f"{section}.{key} must be an integer")
+
+    if result <= 0:
+        raise ConfigValidationError(f"{section}.{key} must be > 0")
+    return result
+
+
+def _require_bool(
+    data: dict[str, Any], key: str, section: str, *, default: bool | None = None
+) -> bool:
+    value = data.get(key, default)
+    if not isinstance(value, bool):
+        raise ConfigValidationError(f"{section}.{key} must be a boolean")
     return value
 
 

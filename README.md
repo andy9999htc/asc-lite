@@ -136,6 +136,69 @@ Example:
 ]
 ```
 
+## Testing
+
+The project is developed test-first from the beginning:
+
+- Unit tests in tests/ cover model validation and mixed-scale position conversion.
+- A standalone script allows local validation without a running Home Assistant instance.
+
+### Unit tests (pytest)
+
+Install test dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run all tests:
+
+```bash
+pytest -q
+```
+
+### Standalone local test script
+
+Use standalone_asc_lite_test.py to validate config and conversion behavior from environment variables.
+
+Quick start (PowerShell):
+
+```powershell
+python .\standalone_asc_lite_test.py
+```
+
+With custom environment variables:
+
+```powershell
+$env:ASC_NAME="ASC Lite Local"
+$env:ASC_SUN_ENTITY_ID="sun.sun"
+$env:ASC_PRESENCE_ENTITY_ID="binary_sensor.resident_home"
+$env:ASC_AUTO_ENABLED_ENTITY_ID="input_boolean.asc_auto_enabled"
+$env:ASC_PARTY_MODE_ENTITY_ID="input_boolean.asc_party_mode"
+$env:ASC_INVERT_POSITIONS_GLOBAL="false"
+$env:ASC_MANUAL_BLOCK_SECONDS="3600"
+$env:ASC_NATIVE_SAMPLE="7"
+$env:ASC_COVERS_JSON='[{"cover_entity_id":"cover.rollladen_ez_mitte","name":"EZ Mitte","scale":10,"azimuth_min":110,"azimuth_max":255,"elevation_min":8,"elevation_max":60,"min_temp_c":18,"lux_enter":380,"lux_exit":300,"hysteresis_enabled":true}]'
+
+python .\standalone_asc_lite_test.py
+```
+
+Supported environment variables:
+
+- ASC_NAME
+- ASC_SUN_ENTITY_ID
+- ASC_PRESENCE_ENTITY_ID
+- ASC_AUTO_ENABLED_ENTITY_ID
+- ASC_PARTY_MODE_ENTITY_ID
+- ASC_TERRACE_WINDOW_ENTITY_ID
+- ASC_OUTDOOR_TEMP_ENTITY_ID
+- ASC_LUX_WZ_ENTITY_ID
+- ASC_LUX_EZ_ENTITY_ID
+- ASC_INVERT_POSITIONS_GLOBAL
+- ASC_MANUAL_BLOCK_SECONDS
+- ASC_NATIVE_SAMPLE
+- ASC_COVERS_JSON
+
 ## Project docs
 
 The MVP spec and implementation details are documented in:
