@@ -27,6 +27,7 @@ class FakeEntry:
 
 
 def _parse_bool(name: str, default: bool) -> bool:
+    """Parse boolean-like environment variables used by this script."""
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -41,6 +42,7 @@ def _parse_bool(name: str, default: bool) -> bool:
 
 
 def _parse_int(name: str, default: int) -> int:
+    """Parse integer environment variables with default fallback."""
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -48,6 +50,7 @@ def _parse_int(name: str, default: int) -> int:
 
 
 def _parse_optional_float(name: str) -> float | None:
+    """Parse optional float environment variables."""
     raw = os.getenv(name)
     if raw is None or not raw.strip():
         return None
@@ -55,6 +58,7 @@ def _parse_optional_float(name: str) -> float | None:
 
 
 def _parse_json_env(name: str, default: Any) -> Any:
+    """Parse JSON payload from environment variables."""
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -136,6 +140,7 @@ def run_position_samples(cfg: Any) -> None:
 
 
 def main() -> int:
+    """Run standalone validation and sample position conversion checks."""
     try:
         entry = build_entry_from_env()
         cfg = build_runtime_config(entry)

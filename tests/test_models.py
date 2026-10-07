@@ -1,3 +1,9 @@
+"""Unit tests for configuration model validation.
+
+These tests intentionally avoid Home Assistant runtime dependencies by using a
+minimal fake entry object.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

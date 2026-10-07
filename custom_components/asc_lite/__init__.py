@@ -1,4 +1,8 @@
-"""ASC Lite integration."""
+"""Home Assistant integration entrypoint for ASC Lite.
+
+The module wires config entries into runtime state and handles reload/unload
+lifecycles. Business rules are implemented in dedicated engine modules.
+"""
 
 from __future__ import annotations
 
@@ -21,12 +25,20 @@ _PLATFORMS: list[str] = []
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up ASC Lite from YAML (not used)."""
+    """Set up ASC Lite from YAML.
+
+    YAML setup is intentionally a no-op for MVP because configuration is handled
+    through config entries only.
+    """
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up ASC Lite from a config entry."""
+    """Set up ASC Lite from a config entry.
+
+    Runtime config is validated and cached under ``hass.data[DOMAIN]`` so later
+    coordinator/engine steps can use a typed, pre-validated model.
+    """
     runtime_config = build_runtime_config(entry)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
@@ -42,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload an ASC Lite config entry."""
+    """Unload an ASC Lite config entry and remove cached runtime state."""
     unload_ok = True
     if _PLATFORMS:
         unload_ok = await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
@@ -55,5 +67,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload entry when options are updated."""
+    """Reload the entry when options are updated in the UI."""
     await hass.config_entries.async_reload(entry.entry_id)

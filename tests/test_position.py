@@ -1,3 +1,5 @@
+"""Unit tests for native<->normalized position conversion helpers."""
+
 from __future__ import annotations
 
 import pytest

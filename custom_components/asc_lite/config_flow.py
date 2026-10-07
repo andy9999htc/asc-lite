@@ -1,4 +1,11 @@
-"""Config flow for ASC Lite."""
+"""Config and options flow for ASC Lite.
+
+The flow is intentionally split into two stages:
+1) global bindings/settings and
+2) per-cover JSON payload.
+
+This keeps the UI compact while still allowing advanced per-cover fields.
+"""
 
 from __future__ import annotations
 
@@ -51,7 +58,7 @@ OPTIONAL_ENTITY_KEYS: tuple[str, ...] = (
 
 
 class ASCLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for ASC Lite."""
+    """Handle initial setup for ASC Lite."""
 
     VERSION = 1
 
@@ -59,7 +66,7 @@ class ASCLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> ASCLiteOptionsFlow:
-        """Create the options flow."""
+        """Return the options flow handler for an existing entry."""
         return ASCLiteOptionsFlow(config_entry)
 
     _global_data: dict[str, Any]
@@ -67,7 +74,11 @@ class ASCLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """First step: global settings."""
+        """Collect and validate global settings.
+
+        Only required/optional entity references are checked here. Per-cover
+        payload validation runs in the next step.
+        """
         await self.async_set_unique_id(DOMAIN)
         self._abort_if_unique_id_configured()
 
@@ -88,7 +99,7 @@ class ASCLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_covers(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Second step: per-cover configuration."""
+        """Collect per-cover JSON, then run full configuration validation."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -122,7 +133,7 @@ class ASCLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class ASCLiteOptionsFlow(config_entries.OptionsFlow):
-    """Options flow for ASC Lite."""
+    """Handle post-setup edits for ASC Lite."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._entry = config_entry
@@ -130,7 +141,7 @@ class ASCLiteOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
-        """Manage integration options."""
+        """Update entry options with the same validation semantics as setup."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -152,6 +163,7 @@ class ASCLiteOptionsFlow(config_entries.OptionsFlow):
 
 
 def _global_schema(user_input: Mapping[str, Any] | None) -> vol.Schema:
+    """Build schema for the global setup form step."""
     values = dict(user_input or {})
     return vol.Schema(
         {
@@ -215,6 +227,11 @@ def _options_schema(
     entry: config_entries.ConfigEntry,
     user_input: Mapping[str, Any] | None,
 ) -> vol.Schema:
+    """Build schema for the options dialog.
+
+    Existing entry values are used as defaults and overlaid with in-form values
+    during validation retries.
+    """
     values = _entry_merged(entry)
     if user_input:
         values.update(user_input)
@@ -285,6 +302,7 @@ async def _validate_global_entities(
     hass: HomeAssistant,
     data: Mapping[str, Any],
 ) -> dict[str, str]:
+    """Validate existence of required and optional global entity bindings."""
     errors: dict[str, str] = {}
 
     for key in REQUIRED_ENTITY_KEYS:
@@ -306,6 +324,13 @@ async def _validate_full_config(
     hass: HomeAssistant,
     candidate: dict[str, Any],
 ) -> dict[str, str]:
+    """Validate full candidate config including cover JSON semantics.
+
+    Validation order:
+    1) global entity existence,
+    2) cover entity existence,
+    3) typed model constraints via ``build_runtime_config``.
+    """
     errors = await _validate_global_entities(hass, candidate)
     if errors:
         return errors
@@ -325,6 +350,7 @@ async def _validate_full_config(
 
 
 def _entity_exists(hass: HomeAssistant, entity_id: str) -> bool:
+    """Check entity existence via registry first, then state machine fallback."""
     registry = er.async_get(hass)
     if registry.async_get(entity_id):
         return True
@@ -332,6 +358,7 @@ def _entity_exists(hass: HomeAssistant, entity_id: str) -> bool:
 
 
 def _default_covers_json() -> str:
+    """Return a starter JSON snippet shown in the config flow text area."""
     return json.dumps(
         [
             {
@@ -353,6 +380,7 @@ def _default_covers_json() -> str:
 
 
 def _parse_covers_json(raw: str) -> list[dict[str, Any]] | None:
+    """Parse and shape-check the per-cover JSON payload from the form."""
     try:
         decoded = json.loads(raw)
     except json.JSONDecodeError:
@@ -368,6 +396,7 @@ def _parse_covers_json(raw: str) -> list[dict[str, Any]] | None:
 
 
 def _entry_merged(entry: config_entries.ConfigEntry) -> dict[str, Any]:
+    """Return effective config values with options overriding original data."""
     return {**entry.data, **entry.options}
 
 

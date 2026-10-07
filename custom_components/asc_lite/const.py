@@ -1,10 +1,15 @@
-"""Constants for ASC Lite."""
+"""Central constants used by ASC Lite.
+
+This module keeps all config keys and defaults in one place to avoid drift
+between config flow, runtime models, and engine modules.
+"""
 
 from __future__ import annotations
 
 DOMAIN = "asc_lite"
 LOGGER_NAME = "custom_components.asc_lite"
 
+# Shared config keys (global).
 CONF_NAME = "name"
 CONF_SUN_ENTITY_ID = "sun_entity_id"
 CONF_PRESENCE_ENTITY_ID = "presence_entity_id"
@@ -18,6 +23,7 @@ CONF_LUX_EZ_ENTITY_ID = "lux_ez_entity_id"
 CONF_INVERT_POSITIONS_GLOBAL = "invert_positions_global"
 CONF_MANUAL_BLOCK_SECONDS = "manual_block_seconds"
 
+# Per-cover keys.
 CONF_COVERS = "covers"
 CONF_COVER_ENTITY_ID = "cover_entity_id"
 CONF_COVER_NAME = "name"
@@ -32,9 +38,11 @@ CONF_LUX_ENTER = "lux_enter"
 CONF_LUX_EXIT = "lux_exit"
 CONF_HYSTERESIS_ENABLED = "hysteresis_enabled"
 
+# Defaults.
 DEFAULT_NAME = "ASC Lite"
 DEFAULT_SUN_ENTITY_ID = "sun.sun"
 DEFAULT_MANUAL_BLOCK_SECONDS = 3600
 DEFAULT_INVERT_POSITIONS_GLOBAL = False
 
+# Supported native cover scales for MVP.
 ALLOWED_COVER_SCALES: set[int] = {10, 100}

@@ -1,4 +1,8 @@
-"""Typed runtime models for ASC Lite configuration."""
+"""Typed runtime models for ASC Lite configuration.
+
+The model layer is intentionally independent from Home Assistant runtime types
+so validation can be reused in unit tests and standalone tooling.
+"""
 
 from __future__ import annotations
 
@@ -40,7 +44,7 @@ class ConfigValidationError(ValueError):
 
 
 class EntryLike(Protocol):
-    """Minimal config entry contract needed by build_runtime_config."""
+    """Minimal config-entry contract needed by ``build_runtime_config``."""
 
     data: dict[str, Any]
     options: dict[str, Any]
@@ -133,7 +137,11 @@ class GlobalConfig:
 
 
 def build_runtime_config(entry: EntryLike) -> GlobalConfig:
-    """Build and validate runtime config from config entry data/options."""
+    """Build and validate runtime config from entry data/options.
+
+    ``entry.options`` overrides ``entry.data`` to match Home Assistant option
+    semantics.
+    """
     merged: dict[str, Any] = {**entry.data, **entry.options}
 
     covers_raw = merged.get(CONF_COVERS, [])
@@ -202,6 +210,7 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
 
 
 def _require_string(data: dict[str, Any], key: str, section: str) -> str:
+    """Read required non-empty string field or raise validation error."""
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
         raise ConfigValidationError(f"{section}.{key} is required")
@@ -209,6 +218,7 @@ def _require_string(data: dict[str, Any], key: str, section: str) -> str:
 
 
 def _optional_string(value: Any) -> str | None:
+    """Normalize optional string field to stripped value or None."""
     if value is None:
         return None
     if not isinstance(value, str):
@@ -218,8 +228,13 @@ def _optional_string(value: Any) -> str | None:
 
 
 def _require_int(data: dict[str, Any], key: str, section: str) -> int:
+    """Read required integer field.
+
+    Bool values are rejected because they are a subclass of int in Python and
+    typically indicate invalid UI input.
+    """
     value = data.get(key)
-    if not isinstance(value, int):
+    if isinstance(value, bool) or not isinstance(value, int):
         raise ConfigValidationError(f"{section}.{key} must be an integer")
     return value
 
@@ -227,6 +242,7 @@ def _require_int(data: dict[str, Any], key: str, section: str) -> int:
 def _require_positive_int(
     data: dict[str, Any], key: str, section: str, *, default: int | None = None
 ) -> int:
+    """Read positive integer field with optional default fallback."""
     value = data.get(key, default)
     if isinstance(value, bool):
         raise ConfigValidationError(f"{section}.{key} must be an integer")
@@ -245,6 +261,7 @@ def _require_positive_int(
 def _require_bool(
     data: dict[str, Any], key: str, section: str, *, default: bool | None = None
 ) -> bool:
+    """Read strict boolean field with optional default fallback."""
     value = data.get(key, default)
     if not isinstance(value, bool):
         raise ConfigValidationError(f"{section}.{key} must be a boolean")
@@ -252,6 +269,7 @@ def _require_bool(
 
 
 def _require_float(data: dict[str, Any], key: str, section: str) -> float:
+    """Read required numeric field as float."""
     value = data.get(key)
     if isinstance(value, (int, float)):
         return float(value)
@@ -259,6 +277,7 @@ def _require_float(data: dict[str, Any], key: str, section: str) -> float:
 
 
 def _optional_float(value: Any) -> float | None:
+    """Read optional numeric field as float."""
     if value is None:
         return None
     if isinstance(value, (int, float)):
