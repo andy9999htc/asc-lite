@@ -40,7 +40,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M1 (Core Decision Engine complete).
+Current implementation stage: M2 (Command Dispatch + Manual Block + Diagnostics complete).
 
 Already implemented:
 
@@ -50,8 +50,11 @@ Already implemented:
 - B-004 Build normalization utilities
 - B-005 Implement rule priority framework
 - B-006 Build state snapshot layer
+- B-007 Implement dispatcher with dedupe
+- B-008 Implement manual override detection
+- B-009 Add diagnostics entities
 
-Next planned stage: M2 (command dispatch + manual block behavior).
+Next planned stage: M3 (MVP rule set).
 
 ## Requirements
 

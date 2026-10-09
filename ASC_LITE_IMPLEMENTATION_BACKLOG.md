@@ -15,7 +15,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 
 1. [x] M0 - Skeleton + Config
 2. [x] M1 - Core Decision Engine (ohne Cover-Kommandos)
-3. [ ] M2 - Command Dispatch + Manual Block
+3. [x] M2 - Command Dispatch + Manual Block
 4. [ ] M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
 5. [ ] M4 - Stabilisierung + Testabschluss
 
@@ -178,6 +178,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Restart restores block expiry correctly
 
 ### B-009 Add diagnostics entities
+- Status: [x] umgesetzt
 - Priority: P1
 - Files:
   - custom_components/asc_lite/sensor.py
