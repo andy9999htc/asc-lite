@@ -264,6 +264,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - No group-based shading model is used in MVP
 
 ### B-015 Implement reason-code logging
+- Status: [x] umgesetzt
 - Priority: P1
 - Files:
   - custom_components/asc_lite/logging.py

@@ -7,11 +7,13 @@ environment variables.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 from dataclasses import dataclass
 from typing import Any
 
+from custom_components.asc_lite.engine.astro import evaluate_astro_rule
 from custom_components.asc_lite.engine.dispatch import DispatchTracker, dispatch_cover_position
 from custom_components.asc_lite.engine.manual import ManualBlockManager
 from custom_components.asc_lite.engine.party import evaluate_party_rule
@@ -19,9 +21,12 @@ from custom_components.asc_lite.engine.position import (
     denormalize_pct_to_native,
     normalize_native_to_pct,
 )
+from custom_components.asc_lite.engine.presence import evaluate_presence_rule
 from custom_components.asc_lite.engine.priority import Decision, PriorityRule, evaluate_rules
+from custom_components.asc_lite.engine.shading import evaluate_lux_shading
 from custom_components.asc_lite.engine.state import build_state_snapshot
 from custom_components.asc_lite.engine.window import evaluate_window_protection
+from custom_components.asc_lite.logging import log_decision
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
 
 
@@ -231,7 +236,7 @@ def run_m2_samples(cfg: Any) -> None:
 
 
 def run_m3_window_sample(cfg: Any) -> None:
-    """Run an M3 window-protection dry-run for the configured terrace cover."""
+    """Run the M3 terrace safety rule dry-runs."""
     terrace_cover_id = cfg.covers[0].entity_id
     terrace_window_id = cfg.terrace_window_entity_id or "binary_sensor.terrace_window"
     snapshot = build_state_snapshot({terrace_window_id: True}, defaults={terrace_window_id: False})
@@ -265,8 +270,90 @@ def run_m3_window_sample(cfg: Any) -> None:
     print(f"- target position: {party_decision.target_position if party_decision else 'none'}")
 
 
+def run_m3_astro_presence_lux_sample(cfg: Any) -> None:
+    """Run the remaining M3 rule dry-runs for astro, presence, and lux."""
+    cover_id = cfg.covers[0].entity_id
+    sun_entity_id = cfg.sun_entity_id
+    presence_entity_id = cfg.presence_entity_id
+    lux_entity_id = cfg.lux_wz_entity_id or "sensor.lux_wz"
+    temp_entity_id = cfg.outdoor_temp_entity_id or "sensor.outdoor_temp"
+    logger = logging.getLogger("custom_components.asc_lite.standalone")
+
+    astro_snapshot = build_state_snapshot(
+        {sun_entity_id: {"elevation": -7.0}},
+        defaults={sun_entity_id: {"elevation": 0.0}},
+    )
+    astro_decision = evaluate_astro_rule(
+        cover_id,
+        astro_snapshot,
+        sun_entity_id=sun_entity_id,
+        close_elevation=-6,
+        close_position=0,
+        valid_cover_ids={cover_id},
+    )
+    print("\nM3 astro dry-run:")
+    print(f"- sun elevation: {astro_snapshot.get(sun_entity_id)['elevation']}")
+    print(f"- selected rule: {astro_decision.rule_id if astro_decision else 'none'}")
+    print(f"- target position: {astro_decision.target_position if astro_decision else 'none'}")
+    log_decision(logger, cover_id, "sun_elevation", astro_decision, result="selected")
+
+    presence_snapshot = build_state_snapshot(
+        {presence_entity_id: "away"},
+        defaults={presence_entity_id: "home"},
+    )
+    presence_decision = evaluate_presence_rule(
+        cover_id,
+        presence_snapshot,
+        presence_entity_id=presence_entity_id,
+        home_values={"home", "on", "present"},
+        away_values={"away", "off", "absent"},
+        open_position=100,
+        close_position=0,
+        forced_open_cover_ids={cover_id},
+    )
+    print("\nM3 presence dry-run:")
+    print(f"- presence state: {presence_snapshot.get(presence_entity_id)}")
+    print(f"- selected rule: {presence_decision.rule_id if presence_decision else 'none'}")
+    print(f"- target position: {presence_decision.target_position if presence_decision else 'none'}")
+    log_decision(logger, cover_id, "presence_state", presence_decision, result="selected")
+
+    lux_snapshot = build_state_snapshot(
+        {
+            lux_entity_id: 1200,
+            sun_entity_id: {"azimuth": 140, "elevation": 28},
+            temp_entity_id: 22,
+        },
+        defaults={lux_entity_id: 0, sun_entity_id: {"azimuth": 0, "elevation": 0}, temp_entity_id: 0},
+    )
+    lux_decision = evaluate_lux_shading(
+        cover_id,
+        lux_snapshot,
+        lux_entity_id=lux_entity_id,
+        sun_entity_id=sun_entity_id,
+        temp_entity_id=temp_entity_id,
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={cover_id},
+        current_position=0,
+    )
+    print("\nM3 lux-shading dry-run:")
+    print(f"- lux value: {lux_snapshot.get(lux_entity_id)}")
+    print(f"- selected rule: {lux_decision.rule_id if lux_decision else 'none'}")
+    print(f"- target position: {lux_decision.target_position if lux_decision else 'none'}")
+    log_decision(logger, cover_id, "lux_shading", lux_decision, result="selected")
+
+
 def main() -> int:
     """Run standalone validation and sample position conversion checks."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
     try:
         entry = build_entry_from_env()
         cfg = build_runtime_config(entry)
@@ -284,6 +371,7 @@ def main() -> int:
     run_engine_samples(cfg)
     run_m2_samples(cfg)
     run_m3_window_sample(cfg)
+    run_m3_astro_presence_lux_sample(cfg)
     return 0
 
 
