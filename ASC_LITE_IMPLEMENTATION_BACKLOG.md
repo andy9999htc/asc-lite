@@ -219,6 +219,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - R-PARTY-001/002 behavior verified
 
 ### B-012 Implement astro rules
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/astro.py
@@ -232,6 +233,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Outside-window actions suppressed with reason
 
 ### B-013 Implement presence rules (including away forced open set)
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/presence.py
@@ -247,6 +249,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - R-PRES-001/002/003 behavior verified
 
 ### B-014 Implement lux shading (non-terrace only)
+- Status: [x] umgesetzt
 - Priority: P1
 - Files:
   - custom_components/asc_lite/engine/shading.py

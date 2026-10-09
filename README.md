@@ -48,7 +48,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M3 (Terrace window and party protection implemented).
+Current implementation stage: M3 (Terrace protection, party gating, astro, presence, and lux shading implemented).
 
 Already implemented:
 
@@ -63,8 +63,11 @@ Already implemented:
 - B-009 Add diagnostics entities
 - B-010 Implement terrace window protection
 - B-011 Implement party rule (terrace evening down only)
+- B-012 Implement astro open/close rules
+- B-013 Implement presence gating and away forced-open set
+- B-014 Implement lux shading for non-terrace shutters
 
-Next planned stage: M3 continuation with astro, presence, and lux rules.
+Next planned stage: M3 completion with reason-code logging and stabilization checks.
 
 ## Requirements
 
