@@ -149,6 +149,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 ## M2 - Command Dispatch + Manual Block
 
 ### B-007 Implement dispatcher with dedupe
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/dispatch.py
@@ -160,6 +161,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Dispatch returns executed/suppressed with reason
 
 ### B-008 Implement manual override detection
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/manual.py

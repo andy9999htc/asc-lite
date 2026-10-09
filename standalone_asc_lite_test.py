@@ -12,12 +12,14 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
+from custom_components.asc_lite.engine.dispatch import DispatchTracker, dispatch_cover_position
+from custom_components.asc_lite.engine.manual import ManualBlockManager
 from custom_components.asc_lite.engine.position import (
     denormalize_pct_to_native,
     normalize_native_to_pct,
 )
 from custom_components.asc_lite.engine.priority import Decision, PriorityRule, evaluate_rules
-from custom_components.asc_lite.engine.state import StateSnapshot, build_state_snapshot
+from custom_components.asc_lite.engine.state import build_state_snapshot
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
 
 
@@ -189,6 +191,43 @@ def run_engine_samples(cfg: Any) -> None:
     print(f"- target position: {decision.target_position if decision else 'none'}")
 
 
+def run_m2_samples(cfg: Any) -> None:
+    """Run M2 dispatch and manual-block dry-run checks."""
+    tracker = DispatchTracker()
+    dispatch_cover_position(
+        cfg.covers[0].entity_id,
+        55,
+        tracker=tracker,
+        now=100.0,
+        command_fn=lambda entity_id, target: print(
+            f"- dispatch: {entity_id} -> {target} @ {100.0}"
+        ),
+    )
+    duplicate = dispatch_cover_position(
+        cfg.covers[0].entity_id,
+        55,
+        tracker=tracker,
+        now=110.0,
+        command_fn=lambda entity_id, target: print(
+            f"- dispatch: {entity_id} -> {target} @ {110.0}"
+        ),
+    )
+
+    manager = ManualBlockManager()
+    manager.mark_manual_move(cfg.covers[0].entity_id, now=200.0, duration_seconds=600)
+
+    print("\nM2 dispatch/manual dry-run:")
+    print(f"- duplicate suppressed: {duplicate.executed is False} ({duplicate.reason})")
+    print(
+        "- manual block suppresses shading: "
+        f"{manager.should_suppress_auto_action(cfg.covers[0].entity_id, 'shading', now=250.0)}"
+    )
+    print(
+        "- manual block allows evening_down: "
+        f"{manager.should_suppress_auto_action(cfg.covers[0].entity_id, 'evening_down', now=250.0)}"
+    )
+
+
 def main() -> int:
     """Run standalone validation and sample position conversion checks."""
     try:
@@ -206,6 +245,7 @@ def main() -> int:
 
     run_position_samples(cfg)
     run_engine_samples(cfg)
+    run_m2_samples(cfg)
     return 0
 
 
