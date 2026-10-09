@@ -1,0 +1,73 @@
+set_manual_block:
+  name: Set manual block
+  description: >-
+    Temporarily suppresses shading and comfort automation for the selected cover while
+    leaving evening-down and safety/window rules active. This is intended for pilot
+    testing and manual override validation.
+  fields:
+    entity_id:
+      required: true
+      example: cover.rollladen_wohnzimmer
+      selector:
+        entity:
+          integration: asc_lite
+          domain: cover
+    duration:
+      required: false
+      example: 3600
+      default: 3600
+      selector:
+        number:
+          min: 0
+          max: 86400
+          unit_of_measurement: s
+          step: 1
+          mode: box
+    reason:
+      required: false
+      example: pilot_manual_test
+      selector:
+        text:
+
+clear_manual_block:
+  name: Clear manual block
+  description: Removes the active manual block for the selected cover.
+  fields:
+    entity_id:
+      required: true
+      example: cover.rollladen_wohnzimmer
+      selector:
+        entity:
+          integration: asc_lite
+          domain: cover
+
+set_party_mode:
+  name: Set party mode
+  description: >-
+    Enables or disables party mode for the terrace. Party mode suppresses terrace
+    evening-down behavior only and does not affect other shutters or safety rules.
+  fields:
+    enabled:
+      required: true
+      example: true
+      selector:
+        boolean:
+
+set_auto_enabled:
+  name: Set auto enabled
+  description: >-
+    Enables or disables automatic ASC processing for the selected cover or the whole
+    integration. This is primarily used during pilot acceptance tests.
+  fields:
+    entity_id:
+      required: true
+      example: cover.rollladen_wohnzimmer
+      selector:
+        entity:
+          integration: asc_lite
+          domain: cover
+    enabled:
+      required: true
+      example: true
+      selector:
+        boolean:

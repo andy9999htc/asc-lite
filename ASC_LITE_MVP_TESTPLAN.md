@@ -82,6 +82,9 @@ Secondary verification shutters (after pilot):
 
 | Date | Tester | Test ID | Result (pass/fail) | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-09 | pilot | T-001 | pass | local decision trace: `astro_morning_open` | Morning-open gate verified in local dry-run |
+| 2026-10-09 | pilot | T-008 | pass | manual-block decision trace | Auto shading suppressed while block active |
+| 2026-10-09 | pilot | T-014 | pass | presence-away forced-open trace | Amelie and Schlafzimmer shutters opened as configured |
 | YYYY-MM-DD | name | T-001 | pass | screenshot/log link | - |
 
 ## 7) Pilot Rollout Checklist

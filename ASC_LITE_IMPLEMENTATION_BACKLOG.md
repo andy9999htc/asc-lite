@@ -16,8 +16,8 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 1. [x] M0 - Skeleton + Config
 2. [x] M1 - Core Decision Engine (ohne Cover-Kommandos)
 3. [x] M2 - Command Dispatch + Manual Block
-4. [ ] M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
-5. [ ] M4 - Stabilisierung + Testabschluss
+4. [x] M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
+5. [x] M4 - Stabilisierung + Testabschluss
 
 ## 2a) Test-Policy (verbindlich)
 
@@ -277,6 +277,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 ## M4 - Stabilisierung + Testabschluss
 
 ### B-016 Unit tests for engine
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - tests/test_position.py
@@ -289,6 +290,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Core rule tests green in CI/local
 
 ### B-017 Integration tests for pilot shutters
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - tests/test_mvp_flows.py
@@ -299,10 +301,11 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - All MVP acceptance tests pass
 
 ### B-018 Pilot rollout package
+- Status: [x] umgesetzt
 - Priority: P1
 - Files:
   - custom_components/asc_lite/services.yaml
-  - fhem/docs/ASC_LITE_MVP_TESTPLAN.md
+  - ASC_LITE_MVP_TESTPLAN.md
 - Scope:
   - Add helper services for controlled manual testing
   - Fill test evidence table during pilot

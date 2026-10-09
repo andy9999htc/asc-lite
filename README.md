@@ -11,6 +11,13 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.4.0
+
+- Completed M4 stabilization and pilot acceptance work.
+- Added M4 acceptance coverage for scale/inversion, terrace party/window safety, presence-away forced-open, and astro/lux gating.
+- Added a rollout package with helper services and pilot evidence tracking in the project docs.
+- Updated backlog and README status for release-readiness after the MVP rule and pilot validation phases.
+
 ### v0.3.0
 
 - Completed M3 MVP rule set: terrace window protection, party gating, astro open/close, presence handling, and lux shading.
@@ -55,7 +62,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M3 complete (terrace protection, party gating, astro, presence, lux shading, and reason-code logging implemented).
+Current implementation stage: M4 complete (stabilization, acceptance coverage, and rollout package implemented and validated locally).
 
 Already implemented:
 
@@ -74,8 +81,11 @@ Already implemented:
 - B-013 Implement presence gating and away forced-open set
 - B-014 Implement lux shading for non-terrace shutters
 - B-015 Implement reason-code decision logging
+- B-016 Unit test coverage for engine behavior
+- B-017 Pilot acceptance tests and M4 validation
+- B-018 Pilot rollout package and evidence tracking
 
-Next planned stage: M4 stabilization and pilot acceptance testing.
+Next planned stage: release validation and pilot deployment / production rollout.
 
 ## Requirements
 
@@ -252,18 +262,18 @@ Implementation order (summary):
 2. M1 Core decision engine - completed
 3. M2 Dispatch + manual block behavior - completed
 4. M3 MVP rule set - completed
-5. M4 Stabilization + test completion - active
+5. M4 Stabilization + test completion - completed
 
-Current status: M0-M3 are complete; M4 is the active next milestone.
+Current status: M0-M4 are complete; the project is ready for release validation and pilot rollout.
 
-See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown and remaining work items.
+See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown and evidence trail.
 
 ## Known limitations (current phase)
 
-- M3 rule implementations are complete and validated locally.
-- The engine is in place and ready for full M4 stabilization, pilot acceptance, and any follow-up polish.
-- Diagnostics and manual-block functionality are implemented and validated locally; service helpers remain scheduled for later milestones.
-- README reflects the current architecture and backlog status, not final pilot completion.
+- M4 stabilization and pilot acceptance checks are complete and validated locally.
+- The engine is release-ready for pilot deployment, subject to HA runtime validation in the target environment.
+- Diagnostics, manual-block, and rollout helper services are implemented and documented.
+- README reflects the current architecture and backlog status after M4 completion.
 
 ## Contributing
 
