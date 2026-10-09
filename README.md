@@ -11,6 +11,14 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.2.5
+
+- Completed M2 command dispatch and manual-block milestone.
+- Added deduplicating dispatch logic for cover target commands.
+- Added manual override detection and expiry handling for auto-suppression rules.
+- Added diagnostic sensor and switch helpers for rule decisions and manual-block state.
+- Extended standalone validation with M1/M2 dry-run examples and local regression coverage.
+
 ### v0.2.0
 
 - Completed M1 core decision engine milestone.
