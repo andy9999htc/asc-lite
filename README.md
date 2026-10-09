@@ -235,21 +235,22 @@ The MVP spec and implementation details are documented in:
 
 Implementation order (summary):
 
-1. M0 Skeleton + Config
-2. M1 Core decision engine
-3. M2 Dispatch + manual block behavior
-4. M3 MVP rule set
-5. M4 Stabilization + test completion
+1. M0 Skeleton + Config - completed
+2. M1 Core decision engine - completed
+3. M2 Dispatch + manual block behavior - completed
+4. M3 MVP rule set - next milestone
+5. M4 Stabilization + test completion - planned
 
-Current status: M1 complete; M2 is the active next milestone.
+Current status: M0-M2 are complete; M3 is the active next milestone.
 
-See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown.
+See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown and remaining work items.
 
 ## Known limitations (current phase)
 
-- Rule engine behavior is not fully active until M1-M3 tasks are completed.
-- Diagnostics entities and service helpers are planned for later milestones.
-- README reflects active architecture decisions, but feature completeness follows the backlog milestones.
+- MVP rule implementations for terrace/window, party, astro, presence, and lux shading are still pending in M3.
+- The rule engine is in place, but full end-to-end behavior for all ASC rules is not yet active.
+- Diagnostics and manual-block functionality are implemented and validated locally; service helpers remain scheduled for later milestones.
+- README reflects the active architecture and backlog status, not final pilot completion.
 
 ## Contributing
 
