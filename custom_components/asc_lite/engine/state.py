@@ -47,9 +47,12 @@ def build_state_snapshot(
 
     resolved: dict[str, Any] = {}
     for key, value in merged.items():
-        if value in _UNKNOWN_VALUES:
+        if value is None:
             resolved[key] = defaults.get(key) if defaults and key in defaults else None
-        else:
-            resolved[key] = value
+            continue
+        if isinstance(value, str) and value.strip().lower() in _UNKNOWN_VALUES:
+            resolved[key] = defaults.get(key) if defaults and key in defaults else None
+            continue
+        resolved[key] = value
 
     return StateSnapshot(values=resolved)

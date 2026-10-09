@@ -79,6 +79,16 @@ def test_state_snapshot_uses_fallbacks_for_missing_or_unavailable_states() -> No
     assert snapshot.get("binary_sensor.missing") is True
 
 
+def test_state_snapshot_accepts_dict_like_states_without_crashing() -> None:
+    snapshot = build_state_snapshot(
+        {"sun.sun": {"elevation": -7.0, "azimuth": 160}, "sensor.lux": 650},
+        defaults={"sun.sun": {"elevation": 0.0, "azimuth": 0}, "sensor.lux": 0},
+    )
+
+    assert snapshot.get("sun.sun") == {"elevation": -7.0, "azimuth": 160}
+    assert snapshot.get("sensor.lux") == 650
+
+
 def test_state_snapshot_uses_known_values_without_fallback() -> None:
     snapshot = StateSnapshot({"sensor.lux": 650, "cover.1": 40})
 
