@@ -48,7 +48,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M2 (Command Dispatch + Manual Block + Diagnostics complete).
+Current implementation stage: M3 (Terrace window and party protection implemented).
 
 Already implemented:
 
@@ -61,8 +61,10 @@ Already implemented:
 - B-007 Implement dispatcher with dedupe
 - B-008 Implement manual override detection
 - B-009 Add diagnostics entities
+- B-010 Implement terrace window protection
+- B-011 Implement party rule (terrace evening down only)
 
-Next planned stage: M3 (MVP rule set).
+Next planned stage: M3 continuation with astro, presence, and lux rules.
 
 ## Requirements
 

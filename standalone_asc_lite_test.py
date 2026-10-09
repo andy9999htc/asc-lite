@@ -14,12 +14,14 @@ from typing import Any
 
 from custom_components.asc_lite.engine.dispatch import DispatchTracker, dispatch_cover_position
 from custom_components.asc_lite.engine.manual import ManualBlockManager
+from custom_components.asc_lite.engine.party import evaluate_party_rule
 from custom_components.asc_lite.engine.position import (
     denormalize_pct_to_native,
     normalize_native_to_pct,
 )
 from custom_components.asc_lite.engine.priority import Decision, PriorityRule, evaluate_rules
 from custom_components.asc_lite.engine.state import build_state_snapshot
+from custom_components.asc_lite.engine.window import evaluate_window_protection
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
 
 
@@ -228,6 +230,41 @@ def run_m2_samples(cfg: Any) -> None:
     )
 
 
+def run_m3_window_sample(cfg: Any) -> None:
+    """Run an M3 window-protection dry-run for the configured terrace cover."""
+    terrace_cover_id = cfg.covers[0].entity_id
+    terrace_window_id = cfg.terrace_window_entity_id or "binary_sensor.terrace_window"
+    snapshot = build_state_snapshot({terrace_window_id: True}, defaults={terrace_window_id: False})
+
+    decision = evaluate_window_protection(
+        terrace_cover_id,
+        snapshot,
+        terrace_window_entity_id=terrace_window_id,
+        ventilate_position=35,
+        terrace_cover_ids={terrace_cover_id},
+    )
+
+    print("\nM3 window-protection dry-run:")
+    print(f"- terrace window open: {snapshot.get(terrace_window_id)}")
+    print(f"- selected rule: {decision.rule_id if decision else 'none'}")
+    print(f"- target position: {decision.target_position if decision else 'none'}")
+
+    party_snapshot = build_state_snapshot(
+        {"input_boolean.asc_party_mode": True, terrace_cover_id: 80},
+        defaults={"input_boolean.asc_party_mode": False, terrace_cover_id: 0},
+    )
+    party_decision = evaluate_party_rule(
+        terrace_cover_id,
+        party_snapshot,
+        party_mode_entity_id="input_boolean.asc_party_mode",
+        terrace_cover_ids={terrace_cover_id},
+    )
+    print("\nM3 party-rule dry-run:")
+    print(f"- party mode active: {party_snapshot.get('input_boolean.asc_party_mode')}")
+    print(f"- selected rule: {party_decision.rule_id if party_decision else 'none'}")
+    print(f"- target position: {party_decision.target_position if party_decision else 'none'}")
+
+
 def main() -> int:
     """Run standalone validation and sample position conversion checks."""
     try:
@@ -246,6 +283,7 @@ def main() -> int:
     run_position_samples(cfg)
     run_engine_samples(cfg)
     run_m2_samples(cfg)
+    run_m3_window_sample(cfg)
     return 0
 
 

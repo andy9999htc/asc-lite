@@ -195,6 +195,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 ## M3 - MVP Rules
 
 ### B-010 Implement terrace window protection
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/window.py
@@ -206,6 +207,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Rule IDs align with decision table (R-WIN-001/002)
 
 ### B-011 Implement party rule (terrace evening down only)
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/party.py

@@ -7,8 +7,10 @@ scripts and pytest runs.
 
 from .dispatch import DispatchResult, DispatchTracker, dispatch_cover_position
 from .manual import ManualBlockManager
+from .party import evaluate_party_rule
 from .priority import Decision, PriorityRule, evaluate_rules
 from .state import StateSnapshot, build_state_snapshot
+from .window import evaluate_window_protection
 
 __all__ = [
     "Decision",
@@ -19,5 +21,7 @@ __all__ = [
     "StateSnapshot",
     "build_state_snapshot",
     "dispatch_cover_position",
+    "evaluate_party_rule",
     "evaluate_rules",
+    "evaluate_window_protection",
 ]
