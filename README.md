@@ -11,6 +11,13 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.3.0
+
+- Completed M3 MVP rule set: terrace window protection, party gating, astro open/close, presence handling, and lux shading.
+- Added reason-code decision logging for rule-level evidence and local pilot validation.
+- Extended standalone validation with M3 dry-run checks and logging output.
+- Updated backlog and README project status to reflect M3 completion and the M4 stabilization phase.
+
 ### v0.2.5
 
 - Completed M2 command dispatch and manual-block milestone.
@@ -48,7 +55,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M3 (Terrace protection, party gating, astro, presence, and lux shading implemented).
+Current implementation stage: M3 complete (terrace protection, party gating, astro, presence, lux shading, and reason-code logging implemented).
 
 Already implemented:
 
@@ -66,8 +73,9 @@ Already implemented:
 - B-012 Implement astro open/close rules
 - B-013 Implement presence gating and away forced-open set
 - B-014 Implement lux shading for non-terrace shutters
+- B-015 Implement reason-code decision logging
 
-Next planned stage: M3 completion with reason-code logging and stabilization checks.
+Next planned stage: M4 stabilization and pilot acceptance testing.
 
 ## Requirements
 
@@ -243,19 +251,19 @@ Implementation order (summary):
 1. M0 Skeleton + Config - completed
 2. M1 Core decision engine - completed
 3. M2 Dispatch + manual block behavior - completed
-4. M3 MVP rule set - next milestone
-5. M4 Stabilization + test completion - planned
+4. M3 MVP rule set - completed
+5. M4 Stabilization + test completion - active
 
-Current status: M0-M2 are complete; M3 is the active next milestone.
+Current status: M0-M3 are complete; M4 is the active next milestone.
 
 See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown and remaining work items.
 
 ## Known limitations (current phase)
 
-- MVP rule implementations for terrace/window, party, astro, presence, and lux shading are still pending in M3.
-- The rule engine is in place, but full end-to-end behavior for all ASC rules is not yet active.
+- M3 rule implementations are complete and validated locally.
+- The engine is in place and ready for full M4 stabilization, pilot acceptance, and any follow-up polish.
 - Diagnostics and manual-block functionality are implemented and validated locally; service helpers remain scheduled for later milestones.
-- README reflects the active architecture and backlog status, not final pilot completion.
+- README reflects the current architecture and backlog status, not final pilot completion.
 
 ## Contributing
 
