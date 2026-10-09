@@ -13,11 +13,11 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 
 ## 2) Meilensteine
 
-1. M0 - Skeleton + Config
-2. M1 - Core Decision Engine (ohne Cover-Kommandos)
-3. M2 - Command Dispatch + Manual Block
-4. M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
-5. M4 - Stabilisierung + Testabschluss
+1. [x] M0 - Skeleton + Config
+2. [x] M1 - Core Decision Engine (ohne Cover-Kommandos)
+3. [ ] M2 - Command Dispatch + Manual Block
+4. [ ] M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
+5. [ ] M4 - Stabilisierung + Testabschluss
 
 ## 2a) Test-Policy (verbindlich)
 
@@ -56,6 +56,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 ## M0 - Skeleton + Config
 
 ### B-001 Create integration skeleton
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/manifest.json
@@ -69,6 +70,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - No startup errors in HA logs
 
 ### B-002 Add Config Flow and Options Flow
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/config_flow.py
@@ -82,6 +84,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Option changes persist and reload entry
 
 ### B-003 Define typed models
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/models.py
@@ -105,6 +108,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 ## M1 - Core Decision Engine
 
 ### B-004 Build normalization utilities
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/position.py
@@ -117,6 +121,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Inversion test passes for all conversions
 
 ### B-005 Implement rule priority framework
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/priority.py
@@ -129,6 +134,7 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
   - Structured decision object includes rule_id + reason_code
 
 ### B-006 Build state snapshot layer
+- Status: [x] umgesetzt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/coordinator.py

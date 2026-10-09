@@ -16,6 +16,8 @@ from custom_components.asc_lite.engine.position import (
     denormalize_pct_to_native,
     normalize_native_to_pct,
 )
+from custom_components.asc_lite.engine.priority import Decision, PriorityRule, evaluate_rules
+from custom_components.asc_lite.engine.state import StateSnapshot, build_state_snapshot
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
 
 
@@ -139,6 +141,54 @@ def run_position_samples(cfg: Any) -> None:
         )
 
 
+def run_engine_samples(cfg: Any) -> None:
+    """Run a small M1 dry-run to exercise priority and snapshot logic."""
+    snapshot = build_state_snapshot(
+        {
+            cfg.sun_entity_id: "night",
+            cfg.presence_entity_id: "home",
+            cfg.terrace_window_entity_id or "binary_sensor.terrace_window": False,
+            cfg.covers[0].entity_id: 0,
+        },
+        defaults={
+            cfg.terrace_window_entity_id or "binary_sensor.terrace_window": False,
+            cfg.covers[0].entity_id: 0,
+        },
+    )
+
+    rules = [
+        PriorityRule(
+            rule_id="R-LOW",
+            priority=10,
+            reason_code="LOW",
+            predicate=lambda current: current.get(cfg.sun_entity_id) == "night",
+            action=lambda current: Decision(
+                rule_id="R-LOW",
+                reason_code="LOW",
+                target_position=0,
+            ),
+        ),
+        PriorityRule(
+            rule_id="R-HIGH",
+            priority=50,
+            reason_code="HIGH",
+            predicate=lambda current: current.get(cfg.presence_entity_id) == "home",
+            action=lambda current: Decision(
+                rule_id="R-HIGH",
+                reason_code="HIGH",
+                target_position=80,
+            ),
+        ),
+    ]
+
+    decision = evaluate_rules(snapshot, rules)
+    print("\nEngine priority dry-run:")
+    print(f"- snapshot keys: {sorted(snapshot.values)}")
+    print(f"- selected rule: {decision.rule_id if decision else 'none'}")
+    print(f"- reason: {decision.reason_code if decision else 'none'}")
+    print(f"- target position: {decision.target_position if decision else 'none'}")
+
+
 def main() -> int:
     """Run standalone validation and sample position conversion checks."""
     try:
@@ -155,6 +205,7 @@ def main() -> int:
     print(f"Manual block seconds: {cfg.manual_block_seconds}")
 
     run_position_samples(cfg)
+    run_engine_samples(cfg)
     return 0
 
 

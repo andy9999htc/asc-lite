@@ -11,6 +11,14 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.2.0
+
+- Completed M1 core decision engine milestone.
+- Added deterministic rule priority evaluation with stable winning rule selection.
+- Added state snapshot layer with unknown/unavailable fallback handling.
+- Added unit tests for rule priority and snapshot behavior.
+- Extended standalone local validation with M1 engine dry-run checks.
+
 ### v0.1.0
 
 - Initial repository bootstrap.
@@ -32,15 +40,18 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M0 (Skeleton + Config + Typed models).
+Current implementation stage: M1 (Core Decision Engine complete).
 
 Already implemented:
 
 - B-001 Create integration skeleton
 - B-002 Add Config Flow and Options Flow
 - B-003 Define typed models
+- B-004 Build normalization utilities
+- B-005 Implement rule priority framework
+- B-006 Build state snapshot layer
 
-Next planned stage: M1 (core decision engine).
+Next planned stage: M2 (command dispatch + manual block behavior).
 
 ## Requirements
 
@@ -218,6 +229,8 @@ Implementation order (summary):
 3. M2 Dispatch + manual block behavior
 4. M3 MVP rule set
 5. M4 Stabilization + test completion
+
+Current status: M1 complete; M2 is the active next milestone.
 
 See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown.
 
