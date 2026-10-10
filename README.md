@@ -11,6 +11,11 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.4.1
+
+- Fixed public metadata consistency for HACS by pointing manifest documentation and issue tracker URLs to the real repository.
+- Added a follow-up maintenance release so HACS installations pick up the corrected metadata from a fresh tag.
+
 ### v0.4.0
 
 - Completed M4 stabilization and pilot acceptance work.
