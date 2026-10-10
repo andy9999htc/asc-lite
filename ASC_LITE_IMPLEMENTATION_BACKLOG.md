@@ -18,6 +18,12 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 3. [x] M2 - Command Dispatch + Manual Block
 4. [x] M3 - MVP Rules live (Terrasse, Party, Presence-away Sonderregel)
 5. [x] M4 - Stabilisierung + Testabschluss
+6. [x] M5 - HA Runtime Wiring + Sichtbarkeit
+
+Hinweis zum aktuellen Stand:
+- M0-M5 sind fuer Engine, Runtime-Verdrahtung und lokale Tests abgeschlossen.
+- In Home Assistant laufen Coordinator-Evaluierung, Diagnostic-Entities und Service-Handler aus der Integration.
+- Der offene Schwerpunkt liegt auf Pilotbetrieb/Feintuning statt Grundverdrahtung.
 
 ## 2a) Test-Policy (verbindlich)
 
@@ -50,6 +56,12 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 - Vollstaendiger Lauf aller Unit- und Integrations-Tests.
 - Mapping der Tests auf `ASC_LITE_MVP_TESTPLAN.md` (T-001..T-022) inkl. Evidenz.
 - 7-Tage Pilotnachweis dokumentiert.
+
+### M5 - HA Runtime Wiring + Sichtbarkeit
+- Runtime-Coordinator mit periodischer Evaluierung ist aktiv (`custom_components/asc_lite/coordinator.py`).
+- Diagnostic-Sensoren und Helper-Switches werden als reale HA-Entities bereitgestellt.
+- Runtime-Services sind registriert und beeinflussen Verhalten/Diagnostik nachvollziehbar.
+- Smoke-Tests fuer Runtime-Registrierung, Entity-Erzeugung und Erst-Evaluierung sind im Testplan und in `tests/test_runtime_smoke.py` hinterlegt.
 
 ## 3) Backlog (priorisiert)
 
@@ -312,6 +324,68 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 - DoD:
   - 7-day pilot evidence recorded
 
+## M5 - HA Runtime Wiring + Sichtbarkeit
+
+### B-019 Wire coordinator evaluation loop into HA runtime
+- Status: [x] umgesetzt
+- Priority: P0
+- Files:
+  - custom_components/asc_lite/__init__.py
+  - custom_components/asc_lite/coordinator.py
+  - tests/test_coordinator_runtime.py
+- Scope:
+  - Start/stop periodic evaluation via config entry lifecycle
+  - Consume configured entities and dispatch decisions in HA runtime
+- DoD:
+  - ASC-lite performs periodic evaluations after setup
+  - Decisions can trigger real cover commands via dispatcher path
+
+### B-020 Expose diagnostic entities as real HA sensors/switches
+- Status: [x] umgesetzt
+- Priority: P0
+- Files:
+  - custom_components/asc_lite/sensor.py
+  - custom_components/asc_lite/switch.py
+  - custom_components/asc_lite/__init__.py
+  - custom_components/asc_lite/coordinator.py
+  - tests/test_coordinator_runtime.py
+- Scope:
+  - Register sensor/switch platforms via `_PLATFORMS`
+  - Create entities for `last_decision_rule`, `last_decision_reason`, `manual_block_active`
+- DoD:
+  - Entities are visible under States/Devices
+  - Values update after each evaluation cycle
+
+### B-021 Register and implement helper services
+- Status: [x] umgesetzt
+- Priority: P1
+- Files:
+  - custom_components/asc_lite/services.yaml
+  - custom_components/asc_lite/__init__.py
+  - custom_components/asc_lite/coordinator.py
+  - tests/test_services_runtime.py
+- Scope:
+  - Register runtime handlers for documented services
+  - Ensure service calls mutate runtime state and are reflected in diagnostics
+- DoD:
+  - Services appear in Developer Tools -> Services
+  - Service invocation affects ASC-lite behavior predictably
+
+### B-022 HA runtime smoke tests and docs alignment
+- Status: [x] umgesetzt
+- Priority: P1
+- Files:
+  - ASC_LITE_MVP_TESTPLAN.md
+  - README.md
+  - tests/test_runtime_smoke.py
+  - tests/test_services_runtime.py
+- Scope:
+  - Add runtime-focused checks (entity visibility, service registration, first live evaluation)
+  - Align docs with actual runtime capability
+- DoD:
+  - Runtime smoke checks documented and repeatable
+  - README status reflects engine vs runtime completion clearly
+
 ## 4) Definition of Done (overall MVP)
 
 1. No hardcoded entity IDs anywhere in integration code.
@@ -343,6 +417,10 @@ Diese Liste beschreibt die konkrete Implementierungsreihenfolge fuer custom_comp
 15. B-016
 16. B-017
 17. B-018
+18. B-019
+19. B-020
+20. B-021
+21. B-022
 
 Test-Gates pro Reihenfolgeblock:
 - Nach B-003: Config/Model Tests + Standalone Check muessen gruen sein.

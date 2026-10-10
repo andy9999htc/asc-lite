@@ -11,6 +11,12 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.5.0
+
+- Added Home Assistant runtime coordinator wiring with periodic evaluation and live dispatch path.
+- Added real diagnostic sensor/switch entities and runtime service handlers (`set_manual_block`, `clear_manual_block`, `set_party_mode`, `set_auto_enabled`).
+- Added runtime smoke and service tests for entity visibility, service registration, and first live evaluation behavior.
+
 ### v0.4.1
 
 - Fixed public metadata consistency for HACS by pointing manifest documentation and issue tracker URLs to the real repository.
@@ -67,7 +73,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Current status
 
-Current implementation stage: M4 complete (stabilization, acceptance coverage, and rollout package implemented and validated locally).
+Current implementation stage: M5 complete (runtime wiring, visibility, and service control implemented and validated locally).
 
 Already implemented:
 
@@ -89,8 +95,12 @@ Already implemented:
 - B-016 Unit test coverage for engine behavior
 - B-017 Pilot acceptance tests and M4 validation
 - B-018 Pilot rollout package and evidence tracking
+- B-019 Runtime coordinator wiring in Home Assistant lifecycle
+- B-020 Real diagnostic sensor/switch entities in Home Assistant
+- B-021 Runtime service registration and handlers
+- B-022 Runtime smoke tests and documentation alignment
 
-Next planned stage: release validation and pilot deployment / production rollout.
+Next planned stage: pilot hardening and in-environment acceptance evidence.
 
 ## Requirements
 
@@ -191,6 +201,7 @@ Example:
 The project is developed test-first from the beginning:
 
 - Unit tests in tests/ cover model validation and mixed-scale position conversion.
+- Runtime smoke tests cover service registration, entity creation, and first live evaluation behavior.
 - A standalone script allows local validation without a running Home Assistant instance.
 
 ### Unit tests (pytest)
@@ -268,17 +279,18 @@ Implementation order (summary):
 3. M2 Dispatch + manual block behavior - completed
 4. M3 MVP rule set - completed
 5. M4 Stabilization + test completion - completed
+6. M5 HA runtime wiring + visibility - completed
 
-Current status: M0-M4 are complete; the project is ready for release validation and pilot rollout.
+Current status: M0-M5 are complete; the project is ready for pilot hardening and runtime evidence capture.
 
 See ASC_LITE_IMPLEMENTATION_BACKLOG.md for the full task breakdown and evidence trail.
 
 ## Known limitations (current phase)
 
-- M4 stabilization and pilot acceptance checks are complete and validated locally.
-- The engine is release-ready for pilot deployment, subject to HA runtime validation in the target environment.
-- Diagnostics, manual-block, and rollout helper services are implemented and documented.
-- README reflects the current architecture and backlog status after M4 completion.
+- Runtime wiring is implemented and covered by local smoke tests, but final evidence still depends on long-running HA pilot observations.
+- Manual-block persistence across Home Assistant restarts is currently memory-scoped in runtime and should be validated/extended during pilot hardening.
+- Weather/safety expansions and advanced external triggers remain outside MVP scope.
+- README reflects the current architecture and backlog status after M5 completion.
 
 ## Contributing
 

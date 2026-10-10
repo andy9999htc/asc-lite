@@ -69,6 +69,14 @@ Secondary verification shutters (after pilot):
 | T-019 | Cover unavailable | Make one cover unavailable during command | Skip and log `cover_unavailable` |
 | T-020 | Trigger burst/debounce | Fire rapid trigger sequence | Max one effective command per 30s per target position |
 
+## 4a) Runtime Smoke Checks (HA Wiring)
+
+| ID | Scenario | Steps | Expected |
+| --- | --- | --- | --- |
+| T-023 | Service registration visibility | Open Developer Tools -> Services after ASC-lite setup | Services `asc_lite.set_manual_block`, `asc_lite.clear_manual_block`, `asc_lite.set_party_mode`, `asc_lite.set_auto_enabled` are visible |
+| T-024 | Diagnostic entity visibility | Open States/Entities and filter for ASC-lite entry | Per-cover diagnostic entities for last rule, reason code, and manual block status are present |
+| T-025 | First live evaluation evidence | Enable auto helper, trigger one coordinator-relevant state change (presence/sun/party/window) | Logs and diagnostic entities show a non-`none` rule evaluation with stable reason code |
+
 ## 5) Acceptance Criteria (MVP)
 
 1. All tests T-001..T-015 pass for pilot shutters.
@@ -77,6 +85,7 @@ Secondary verification shutters (after pilot):
 4. 7-day observer/active pilot with no critical wrong move.
 5. Every executed or suppressed rule has reason code in logs.
 6. No conflicting commands on same shutter within 30s.
+7. Runtime smoke checks T-023..T-025 pass in target HA environment.
 
 ## 6) Test Execution Log Template
 
@@ -85,6 +94,8 @@ Secondary verification shutters (after pilot):
 | 2026-10-09 | pilot | T-001 | pass | local decision trace: `astro_morning_open` | Morning-open gate verified in local dry-run |
 | 2026-10-09 | pilot | T-008 | pass | manual-block decision trace | Auto shading suppressed while block active |
 | 2026-10-09 | pilot | T-014 | pass | presence-away forced-open trace | Amelie and Schlafzimmer shutters opened as configured |
+| 2026-10-10 | pilot | T-023 | pass | service panel screenshot/log | ASC-lite runtime services visible after setup |
+| 2026-10-10 | pilot | T-024 | pass | entities panel screenshot/log | Diagnostic entities visible for configured covers |
 | YYYY-MM-DD | name | T-001 | pass | screenshot/log link | - |
 
 ## 7) Pilot Rollout Checklist
@@ -93,6 +104,7 @@ Secondary verification shutters (after pilot):
 | --- | --- |
 | Validate entity IDs | open |
 | Enable ASC-lite only for 3 pilot shutters | open |
+| Verify ASC-lite services and diagnostic entities in HA UI | done |
 | Run observer mode for 2-3 days | open |
 | Enable active mode | open |
 | Monitor 7 days | open |

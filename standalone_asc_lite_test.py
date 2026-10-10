@@ -6,6 +6,7 @@ environment variables.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -27,7 +28,10 @@ from custom_components.asc_lite.engine.shading import evaluate_lux_shading
 from custom_components.asc_lite.engine.state import build_state_snapshot
 from custom_components.asc_lite.engine.window import evaluate_window_protection
 from custom_components.asc_lite.logging import log_decision
+from custom_components.asc_lite.coordinator import ASCLiteCoordinator
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
+from custom_components.asc_lite.sensor import build_diagnostic_sensor_values
+from custom_components.asc_lite.switch import build_switch_descriptors
 
 
 @dataclass
@@ -35,6 +39,49 @@ class FakeEntry:
     data: dict[str, Any]
     options: dict[str, Any]
     title: str
+
+
+@dataclass
+class FakeState:
+    state: str
+    attributes: dict[str, Any]
+
+
+class FakeStates:
+    def __init__(self, mapping: dict[str, FakeState]) -> None:
+        self._mapping = mapping
+
+    def get(self, entity_id: str) -> FakeState | None:
+        return self._mapping.get(entity_id)
+
+
+class FakeServices:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str, dict[str, Any]]] = []
+
+    async def async_call(
+        self,
+        domain: str,
+        service: str,
+        data: dict[str, Any],
+        blocking: bool = False,
+    ) -> None:
+        _ = blocking
+        self.calls.append((domain, service, data))
+
+
+class FakeRuntimeHass:
+    def __init__(self, state_map: dict[str, FakeState]) -> None:
+        self.states = FakeStates(state_map)
+        self.services = FakeServices()
+
+    def async_create_task(self, coro: Any) -> Any:
+        return asyncio.create_task(coro)
+
+
+@dataclass
+class FakeConfigEntry:
+    entry_id: str
 
 
 def _parse_bool(name: str, default: bool) -> bool:
@@ -350,6 +397,94 @@ def run_m3_astro_presence_lux_sample(cfg: Any) -> None:
     log_decision(logger, cover_id, "lux_shading", lux_decision, result="selected")
 
 
+def run_m5_runtime_wiring_sample(cfg: Any) -> None:
+    """Run a runtime-loop dry-run with the real coordinator and fake HA state."""
+    logger = logging.getLogger("custom_components.asc_lite.runtime_standalone")
+
+    state_map: dict[str, FakeState] = {
+        cfg.auto_enabled_entity_id: FakeState("on", {}),
+        cfg.presence_entity_id: FakeState("away", {}),
+        cfg.party_mode_entity_id: FakeState("off", {}),
+        cfg.sun_entity_id: FakeState("above_horizon", {"elevation": -7.0, "azimuth": 140.0}),
+    }
+
+    if cfg.terrace_window_entity_id:
+        state_map[cfg.terrace_window_entity_id] = FakeState("off", {})
+    if cfg.outdoor_temp_entity_id:
+        state_map[cfg.outdoor_temp_entity_id] = FakeState("22", {})
+    if cfg.lux_wz_entity_id:
+        state_map[cfg.lux_wz_entity_id] = FakeState("1200", {})
+    if cfg.lux_ez_entity_id:
+        state_map[cfg.lux_ez_entity_id] = FakeState("900", {})
+
+    for cover in cfg.covers:
+        state_map[cover.entity_id] = FakeState("open", {"current_position": 100})
+
+    hass = FakeRuntimeHass(state_map)
+    coordinator = ASCLiteCoordinator(
+        hass=hass,
+        entry=FakeConfigEntry(entry_id="standalone"),
+        config=cfg,
+        logger=logger,
+    )
+
+    async def _run() -> None:
+        await coordinator.async_evaluate_once(trigger="standalone_first")
+        await asyncio.sleep(0)
+        await coordinator.async_evaluate_once(trigger="standalone_second")
+        await asyncio.sleep(0)
+
+    asyncio.run(_run())
+
+    print("\nM5 runtime-wiring dry-run (coordinator):")
+    for cover in cfg.covers:
+        runtime_state = coordinator.last_decisions.get(cover.entity_id)
+        if runtime_state is None:
+            print(f"- {cover.entity_id}: no runtime decision")
+            continue
+        print(
+            f"- {cover.entity_id}: rule={runtime_state.rule_id} "
+            f"reason={runtime_state.reason_code} result={runtime_state.result}"
+        )
+
+    print(f"- service calls captured: {len(hass.services.calls)}")
+    for domain, service, payload in hass.services.calls:
+        print(f"  - {domain}.{service}: {payload}")
+
+
+def run_m5_diagnostics_projection_sample(cfg: Any) -> None:
+    """Project B-020 diagnostic entity payloads from current runtime assumptions."""
+    print("\nM5 diagnostics-entity projection dry-run:")
+
+    for cover in cfg.covers:
+        sensor_values = build_diagnostic_sensor_values(
+            cover_id=cover.entity_id,
+            last_decision_rule="R-PRES-001",
+            last_decision_reason="PRESENCE_AWAY_CLOSE",
+            manual_block_active=False,
+        )
+        print(
+            f"- {cover.entity_id}: "
+            f"rule={sensor_values['last_decision_rule']} "
+            f"reason={sensor_values['last_decision_reason']} "
+            f"manual_block_active={sensor_values['manual_block_active']}"
+        )
+
+    first_cover = cfg.covers[0].entity_id
+    switch_descriptors = build_switch_descriptors(
+        cover_id=first_cover,
+        auto_enabled_entity_id=cfg.auto_enabled_entity_id,
+        party_mode_entity_id=cfg.party_mode_entity_id,
+    )
+    print(f"- helper switch descriptors for {first_cover}:")
+    for descriptor in switch_descriptors:
+        print(
+            f"  - name={descriptor['name']} "
+            f"entity_id={descriptor['entity_id']} "
+            f"enabled={descriptor['enabled']}"
+        )
+
+
 def main() -> int:
     """Run standalone validation and sample position conversion checks."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -372,6 +507,8 @@ def main() -> int:
     run_m2_samples(cfg)
     run_m3_window_sample(cfg)
     run_m3_astro_presence_lux_sample(cfg)
+    run_m5_runtime_wiring_sample(cfg)
+    run_m5_diagnostics_projection_sample(cfg)
     return 0
 
 
