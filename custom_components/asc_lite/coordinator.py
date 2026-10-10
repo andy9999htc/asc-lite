@@ -52,6 +52,7 @@ _SUPPRESSED_BY_MANUAL_RULES = {
     "R-ASTRO-002",
     "R-PRES-003",
 }
+_UNAVAILABLE_COVER_REASON = "COVER_UNAVAILABLE"
 
 
 @dataclass(slots=True)
@@ -217,6 +218,22 @@ class ASCLiteCoordinator:
                 decision,
                 result="manual_block_active",
                 metadata={"reason_code": _MANUAL_BLOCK_REASON},
+            )
+            return
+
+        if not _is_cover_available(self.hass, cover_id):
+            self.last_decisions[cover_id] = RuntimeDecisionState(
+                rule_id=decision.rule_id,
+                reason_code=_UNAVAILABLE_COVER_REASON,
+                result="suppressed",
+            )
+            log_decision(
+                self.logger,
+                cover_id,
+                trigger,
+                decision,
+                result="cover_unavailable",
+                metadata={"reason_code": _UNAVAILABLE_COVER_REASON},
             )
             return
 
@@ -442,3 +459,13 @@ def _resolve_lux_entity_id(config: GlobalConfig, cover_id: str) -> str | None:
     if "wohnzimmer" in lowered or "terrasse" in lowered:
         return config.lux_wz_entity_id or config.lux_ez_entity_id
     return config.lux_ez_entity_id or config.lux_wz_entity_id
+
+
+def _is_cover_available(hass: HomeAssistant, cover_id: str) -> bool:
+    """Return whether a cover entity is currently available in Home Assistant."""
+    state = hass.states.get(cover_id)
+    if state is None:
+        return False
+
+    lowered = str(state.state).strip().lower()
+    return lowered not in {"", "unknown", "unavailable", "none"}

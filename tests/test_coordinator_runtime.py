@@ -183,3 +183,37 @@ def test_coordinator_notifies_registered_listeners(asyncio_run) -> None:
     unsub()
 
     assert notifications["count"] == 1
+
+
+def test_unavailable_cover_is_skipped_without_dispatch(asyncio_run) -> None:
+    coordinator = ASCLiteCoordinator(
+        hass=FakeHass(
+            {
+                "input_boolean.asc_auto_enabled": FakeState("on", {}),
+                "input_boolean.asc_presence_dummy": FakeState("away", {}),
+                "input_boolean.asc_party_mode": FakeState("off", {}),
+                "binary_sensor.terrace_window": FakeState("off", {}),
+                "sensor.outdoor_temp": FakeState("22", {}),
+                "sensor.lux_wz": FakeState("1200", {}),
+                "sensor.lux_ez": FakeState("1000", {}),
+                "sun.sun": FakeState("above_horizon", {"elevation": 10, "azimuth": 150}),
+                "cover.rollladen_terrasse": FakeState("open", {"current_position": 100}),
+                "cover.rollladen_wohnzimmer": FakeState("unavailable", {}),
+                "cover.rollladen_amelie_fenster": FakeState("open", {"current_position": 10}),
+            }
+        ),
+        entry=FakeEntry("entry-4"),
+        config=_config(),
+        logger=__import__("logging").getLogger("asc_lite.test"),
+    )
+
+    asyncio_run(coordinator.async_evaluate_once(trigger="unit"))
+
+    result = coordinator.last_decisions["cover.rollladen_wohnzimmer"]
+    assert result.rule_id == "R-PRES-001"
+    assert result.reason_code == "COVER_UNAVAILABLE"
+    assert result.result == "suppressed"
+    assert all(
+        call[2].get("entity_id") != "cover.rollladen_wohnzimmer"
+        for call in coordinator.hass.services.calls
+    )

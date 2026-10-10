@@ -11,6 +11,11 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.5.5
+
+- Added availability guard in runtime dispatch path so unavailable/missing covers are skipped before calling `cover.set_cover_position`.
+- Added regression coverage to ensure unavailable covers are marked as suppressed with reason `COVER_UNAVAILABLE` and do not receive dispatch calls.
+
 ### v0.5.0
 
 - Added Home Assistant runtime coordinator wiring with periodic evaluation and live dispatch path.
