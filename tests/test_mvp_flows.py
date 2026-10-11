@@ -69,10 +69,8 @@ def test_presence_away_forced_open_set_matches_pilot_contract() -> None:
         cover,
         StateSnapshot({"binary_sensor.resident_home": "away"}),
         presence_entity_id="binary_sensor.resident_home",
-        home_values={"home", "on", "present"},
         away_values={"away", "off", "absent"},
         open_position=100,
-        close_position=0,
         forced_open_cover_ids={cover},
     )
 

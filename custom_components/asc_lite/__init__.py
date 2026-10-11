@@ -53,7 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     Runtime config is validated and cached under ``hass.data[DOMAIN]`` so later
     coordinator/engine steps can use a typed, pre-validated model.
     """
+    _LOGGER.info("ASC Lite async_setup_entry: entry_id=%s starting configuration", entry.entry_id)
     runtime_config = build_runtime_config(entry)
+    _LOGGER.info("ASC Lite runtime config built: covers=%d", len(runtime_config.covers))
+    
     coordinator = ASCLiteCoordinator(
         hass=hass,
         entry=entry,
@@ -66,14 +69,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "config": runtime_config,
         "coordinator": coordinator,
     }
+    _LOGGER.info("ASC Lite coordinator created and cached")
 
     if _PLATFORMS:
+        _LOGGER.info("ASC Lite forwarding platforms: %s", _PLATFORMS)
         await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
 
     await _async_register_services(hass)
+    _LOGGER.info("ASC Lite services registered")
+    
+    _LOGGER.info("ASC Lite starting coordinator with 30s evaluation loop")
     await coordinator.async_start()
 
-    _LOGGER.debug("ASC Lite entry %s set up", entry.entry_id)
+    _LOGGER.info("ASC Lite entry %s set up successfully", entry.entry_id)
     return True
 
 

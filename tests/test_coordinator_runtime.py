@@ -210,7 +210,6 @@ def test_unavailable_cover_is_skipped_without_dispatch(asyncio_run) -> None:
     asyncio_run(coordinator.async_evaluate_once(trigger="unit"))
 
     result = coordinator.last_decisions["cover.rollladen_wohnzimmer"]
-    assert result.rule_id == "R-PRES-001"
     assert result.reason_code == "COVER_UNAVAILABLE"
     assert result.result == "suppressed"
     assert all(

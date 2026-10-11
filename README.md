@@ -11,6 +11,17 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.0
+
+- Refactored presence logic to use blocker pattern: presence now blocks astro morning open for kids when presence=home instead of acting as standalone away/home actions.
+- Removed R-PRES-001 (Presence Away Close) and R-PRES-003 (Presence Home Open) rules from priority matrix.
+- Kept R-PRES-002 (Presence Away Forced Open) for kids-only shutters to maintain away state protection.
+- Extended astro morning open evaluation with presence blocker: kids' shutters are prevented from opening when presence=home.
+- Added comprehensive INFO/DEBUG logging throughout coordinator lifecycle and periodic evaluation loop.
+- Created deploy-to-ha.ps1 PowerShell script for faster local development workflow with SSH-based file sync to Raspberry Pi.
+- Updated decision table and engine to reflect new presence role as gate/blocker rather than independent action generator.
+- All runtime behavior validated in production Home Assistant environment.
+
 ### v0.5.5
 
 - Added availability guard in runtime dispatch path so unavailable/missing covers are skipped before calling `cover.set_cover_position`.

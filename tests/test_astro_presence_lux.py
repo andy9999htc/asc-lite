@@ -34,15 +34,64 @@ def test_presence_away_forced_open_set_opens_designated_cover() -> None:
         snapshot,
         presence_entity_id="binary_sensor.resident_home",
         away_values={"away", "off", "absent"},
-        home_values={"home", "on", "present"},
         open_position=100,
-        close_position=0,
         forced_open_cover_ids={"cover.amelie_fenster"},
     )
 
     assert decision is not None
     assert decision.rule_id == "R-PRES-002"
     assert decision.reason_code == "PRESENCE_AWAY_FORCED_OPEN"
+    assert decision.target_position == 100
+
+
+def test_astro_morning_open_blocked_for_kids_when_presence_home() -> None:
+    """When presence=home, astro morning open is blocked for kids shutters."""
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {"elevation": 5},
+            "binary_sensor.resident_home": "on",
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.amelie_fenster",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        valid_cover_ids={"cover.amelie_fenster"},
+        presence_entity_id="binary_sensor.resident_home",
+        presence_home_values={"home", "on", "present"},
+        presence_blocks_morning_open_for={"cover.amelie_fenster"},
+    )
+
+    assert decision is None
+
+
+def test_astro_morning_open_allowed_for_kids_when_presence_away() -> None:
+    """When presence=away, astro morning open is allowed for kids shutters."""
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {"elevation": 5},
+            "binary_sensor.resident_home": "away",
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.amelie_fenster",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        valid_cover_ids={"cover.amelie_fenster"},
+        presence_entity_id="binary_sensor.resident_home",
+        presence_home_values={"home", "on", "present"},
+        presence_blocks_morning_open_for={"cover.amelie_fenster"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
+    assert decision.reason_code == "ASTRO_MORNING_OPEN"
     assert decision.target_position == 100
 
 

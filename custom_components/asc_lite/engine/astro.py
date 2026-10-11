@@ -24,12 +24,14 @@ def evaluate_astro_rule(
     close_position: int | float = 0,
     open_position: int | float = 100,
     valid_cover_ids: set[str] | None = None,
+    presence_entity_id: str | None = None,
+    presence_home_values: set[str] | tuple[str, ...] | None = None,
+    presence_blocks_morning_open_for: set[str] | None = None,
 ) -> Decision | None:
     """Return an astro close/open decision based on the sun elevation.
 
-    The rule is intentionally narrow: it only uses the sun elevation and the
-    configured cover filter. Time-window checks can be applied by the higher
-    level controller before dispatching the matching decision.
+    For morning open on kids' shutters, presence can block the action.
+    When presence=home and cover is a kid's shutter, astro morning open is blocked.
     """
     if valid_cover_ids is not None and cover_id not in valid_cover_ids:
         return None
@@ -46,6 +48,15 @@ def evaluate_astro_rule(
         )
 
     if elevation >= open_elevation:
+        # Check presence blocker for kids' morning open
+        if (
+            presence_entity_id is not None
+            and presence_blocks_morning_open_for is not None
+            and cover_id in presence_blocks_morning_open_for
+        ):
+            if _is_presence_home(snapshot, presence_entity_id, presence_home_values):
+                return None
+
         return Decision(
             rule_id=ASTRO_MORNING_OPEN_RULE_ID,
             reason_code=ASTRO_MORNING_OPEN_REASON,
@@ -70,6 +81,21 @@ def _read_elevation(snapshot: StateSnapshot, sun_entity_id: str) -> float | None
     return _to_float(value)
 
 
+def _is_presence_home(
+    snapshot: StateSnapshot,
+    presence_entity_id: str,
+    home_values: set[str] | tuple[str, ...] | None = None,
+) -> bool:
+    """Check if presence entity indicates home state."""
+    raw_value = snapshot.get(presence_entity_id)
+    if raw_value is None:
+        return False
+
+    normalized = _normalize_state(raw_value)
+    home = {"home", "on", "present"} if home_values is None else {str(value).lower() for value in home_values}
+    return normalized in home
+
+
 def _to_float(value: Any) -> float | None:
     """Coerce a value to float when it is numeric or string-parsable."""
     if value is None:
@@ -85,3 +111,12 @@ def _to_float(value: Any) -> float | None:
         except ValueError:
             return None
     return None
+
+
+def _normalize_state(value: Any) -> str:
+    """Normalize yes/no style state values to a lowercase string."""
+    if isinstance(value, str):
+        return value.strip().lower()
+    if isinstance(value, bool):
+        return "on" if value else "off"
+    return str(value).strip().lower()

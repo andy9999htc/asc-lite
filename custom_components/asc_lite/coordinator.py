@@ -80,18 +80,24 @@ class ASCLiteCoordinator:
 
     async def async_start(self) -> None:
         """Start periodic runtime evaluation for this config entry."""
+        self.logger.info("ASC Lite coordinator.async_start: running initial evaluation")
         await self.async_evaluate_once(trigger="startup")
+        self.logger.info("ASC Lite coordinator: initial evaluation complete, scheduling 30s interval")
 
         async def _async_tick(_now: Any) -> None:
+            self.logger.debug("ASC Lite coordinator 30s tick: evaluating all covers")
             await self.async_evaluate_once(trigger="interval")
 
         self._unsub_interval = async_track_time_interval(self.hass, _async_tick, _UPDATE_INTERVAL)
+        self.logger.info("ASC Lite coordinator: periodic timer registered")
 
     async def async_stop(self) -> None:
         """Stop periodic runtime evaluation for this config entry."""
+        self.logger.info("ASC Lite coordinator.async_stop: stopping periodic evaluation")
         if self._unsub_interval is not None:
             self._unsub_interval()
             self._unsub_interval = None
+        self.logger.info("ASC Lite coordinator: periodic timer cancelled")
 
     def add_listener(self, callback: Any) -> Any:
         """Register a callback invoked after each evaluation cycle."""
@@ -167,6 +173,7 @@ class ASCLiteCoordinator:
 
     async def async_evaluate_once(self, *, trigger: str) -> None:
         """Run one full decision pass for all configured covers."""
+        self.logger.debug("ASC Lite evaluation cycle starting: trigger=%s covers=%d", trigger, len(self.config.covers))
         snapshot = self._build_snapshot()
 
         if not _is_truthy(snapshot.get(self.config.auto_enabled_entity_id, True)):
@@ -296,6 +303,11 @@ class ASCLiteCoordinator:
             for item in self.config.covers
             if _is_forced_open_cover(item.entity_id)
         }
+        kids_cover_ids = {
+            item.entity_id
+            for item in self.config.covers
+            if _is_forced_open_cover(item.entity_id)
+        }
         presence_decision = evaluate_presence_rule(
             cover_id,
             snapshot,
@@ -310,6 +322,8 @@ class ASCLiteCoordinator:
             snapshot,
             sun_entity_id=self.config.sun_entity_id,
             valid_cover_ids={item.entity_id for item in self.config.covers},
+            presence_entity_id=self.config.presence_entity_id,
+            presence_blocks_morning_open_for=kids_cover_ids,
         )
         if astro_decision is not None:
             return astro_decision
