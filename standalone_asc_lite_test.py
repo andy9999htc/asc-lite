@@ -352,10 +352,8 @@ def run_m3_astro_presence_lux_sample(cfg: Any) -> None:
         cover_id,
         presence_snapshot,
         presence_entity_id=presence_entity_id,
-        home_values={"home", "on", "present"},
         away_values={"away", "off", "absent"},
         open_position=100,
-        close_position=0,
         forced_open_cover_ids={cover_id},
     )
     print("\nM3 presence dry-run:")

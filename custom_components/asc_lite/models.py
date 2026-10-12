@@ -14,6 +14,7 @@ from .const import (
     CONF_AUTO_ENABLED_ENTITY_ID,
     CONF_AZIMUTH_MAX,
     CONF_AZIMUTH_MIN,
+    CONF_CLOSE_POSITION,
     CONF_COVER_ENTITY_ID,
     CONF_COVER_NAME,
     CONF_COVER_SCALE,
@@ -32,10 +33,15 @@ from .const import (
     CONF_OUTDOOR_TEMP_ENTITY_ID,
     CONF_PARTY_MODE_ENTITY_ID,
     CONF_PRESENCE_ENTITY_ID,
+    CONF_SHADING_POSITION,
     CONF_SUN_ENTITY_ID,
     CONF_TERRACE_WINDOW_ENTITY_ID,
+    CONF_VENTILATE_POSITION,
+    DEFAULT_CLOSE_POSITION,
     DEFAULT_INVERT_POSITIONS_GLOBAL,
     DEFAULT_MANUAL_BLOCK_SECONDS,
+    DEFAULT_SHADING_POSITION,
+    DEFAULT_VENTILATE_POSITION,
 )
 
 
@@ -94,6 +100,9 @@ class CoverConfig:
     name: str
     scale: int
     shading: ShadingConfig
+    close_position: int = DEFAULT_CLOSE_POSITION
+    shading_position: int = DEFAULT_SHADING_POSITION
+    ventilate_position: int = DEFAULT_VENTILATE_POSITION
 
     def __post_init__(self) -> None:
         if not self.entity_id:
@@ -102,6 +111,9 @@ class CoverConfig:
             raise ConfigValidationError(
                 f"Unsupported cover scale {self.scale}; allowed: {sorted(ALLOWED_COVER_SCALES)}"
             )
+        _ensure_pct_range(self.close_position, "close_position")
+        _ensure_pct_range(self.shading_position, "shading_position")
+        _ensure_pct_range(self.ventilate_position, "ventilate_position")
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,6 +168,24 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
         entity_id = _require_string(item, CONF_COVER_ENTITY_ID, f"covers[{index}]")
         name = str(item.get(CONF_COVER_NAME) or entity_id)
         scale = _require_int(item, CONF_COVER_SCALE, f"covers[{index}]")
+        close_position = _optional_int_with_default(
+            item,
+            CONF_CLOSE_POSITION,
+            f"covers[{index}]",
+            default=DEFAULT_CLOSE_POSITION,
+        )
+        shading_position = _optional_int_with_default(
+            item,
+            CONF_SHADING_POSITION,
+            f"covers[{index}]",
+            default=DEFAULT_SHADING_POSITION,
+        )
+        ventilate_position = _optional_int_with_default(
+            item,
+            CONF_VENTILATE_POSITION,
+            f"covers[{index}]",
+            default=DEFAULT_VENTILATE_POSITION,
+        )
 
         thresholds = ThresholdConfig(
             min_temp_c=_optional_float(item.get(CONF_MIN_TEMP_C)),
@@ -177,6 +207,9 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
                 entity_id=entity_id,
                 name=name,
                 scale=scale,
+                close_position=close_position,
+                shading_position=shading_position,
+                ventilate_position=ventilate_position,
                 shading=shading,
             )
         )
@@ -283,3 +316,23 @@ def _optional_float(value: Any) -> float | None:
     if isinstance(value, (int, float)):
         return float(value)
     raise ConfigValidationError("Optional float value must be numeric")
+
+
+def _optional_int_with_default(
+    data: dict[str, Any], key: str, section: str, *, default: int
+) -> int:
+    """Read optional integer field with default fallback."""
+    value = data.get(key, default)
+    if isinstance(value, bool):
+        raise ConfigValidationError(f"{section}.{key} must be an integer")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    raise ConfigValidationError(f"{section}.{key} must be an integer")
+
+
+def _ensure_pct_range(value: int, field_name: str) -> None:
+    """Ensure per-cover target positions use normalized 0..100 range."""
+    if value < 0 or value > 100:
+        raise ConfigValidationError(f"{field_name} must be in range [0, 100]")

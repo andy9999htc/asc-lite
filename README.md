@@ -11,6 +11,13 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.5
+
+- Added per-cover position settings in config JSON: `close_position`, `shading_position`, and `ventilate_position`.
+- Kept `open_position` fixed at 100 by design.
+- Wired runtime evaluation to use per-cover target positions for astro close, lux shading in, and terrace window ventilation.
+- Added explicit unit tests for per-cover position defaults, per-cover overrides, and 0..100 range validation.
+
 ### v0.6.0
 
 - Refactored presence logic to use blocker pattern: presence now blocks astro morning open for kids when presence=home instead of acting as standalone away/home actions.
@@ -170,6 +177,9 @@ Each cover object supports:
 - cover_entity_id
 - name
 - scale (10 or 100)
+- close_position (0..100, default 0)
+- shading_position (0..100, default 35)
+- ventilate_position (0..100, default 35)
 - azimuth_min
 - azimuth_max
 - elevation_min
@@ -187,6 +197,9 @@ Example:
     "cover_entity_id": "cover.rollladen_wohnzimmer",
     "name": "Wohnzimmer",
     "scale": 100,
+    "close_position": 0,
+    "shading_position": 35,
+    "ventilate_position": 35,
     "azimuth_min": 120,
     "azimuth_max": 260,
     "elevation_min": 10,
@@ -200,6 +213,9 @@ Example:
     "cover_entity_id": "cover.rollladen_ez_mitte",
     "name": "EZ Mitte",
     "scale": 10,
+    "close_position": 0,
+    "shading_position": 40,
+    "ventilate_position": 35,
     "azimuth_min": 110,
     "azimuth_max": 255,
     "elevation_min": 8,

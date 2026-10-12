@@ -63,6 +63,26 @@ def test_build_runtime_config_success(valid_entry: FakeEntry) -> None:
     assert cfg.covers[0].scale == 100
 
 
+def test_cover_position_defaults_applied_when_omitted(valid_entry: FakeEntry) -> None:
+    cfg = build_runtime_config(valid_entry)
+    cover = cfg.covers[0]
+    assert cover.close_position == 0
+    assert cover.shading_position == 35
+    assert cover.ventilate_position == 35
+
+
+def test_cover_position_overrides_applied_from_config(valid_entry: FakeEntry) -> None:
+    valid_entry.data["covers"][0]["close_position"] = 15
+    valid_entry.data["covers"][0]["shading_position"] = 42
+    valid_entry.data["covers"][0]["ventilate_position"] = 28
+
+    cfg = build_runtime_config(valid_entry)
+    cover = cfg.covers[0]
+    assert cover.close_position == 15
+    assert cover.shading_position == 42
+    assert cover.ventilate_position == 28
+
+
 def test_missing_required_binding_rejected(valid_entry: FakeEntry) -> None:
     del valid_entry.data["sun_entity_id"]
     with pytest.raises(ConfigValidationError):
@@ -85,5 +105,24 @@ def test_hysteresis_constraints_rejected(valid_entry: FakeEntry) -> None:
     valid_entry.data["covers"][0]["hysteresis_enabled"] = True
     valid_entry.data["covers"][0]["lux_enter"] = 300
     valid_entry.data["covers"][0]["lux_exit"] = 400
+    with pytest.raises(ConfigValidationError):
+        build_runtime_config(valid_entry)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("close_position", -1),
+        ("close_position", 101),
+        ("shading_position", -1),
+        ("shading_position", 101),
+        ("ventilate_position", -1),
+        ("ventilate_position", 101),
+    ],
+)
+def test_cover_position_range_validation_rejected(
+    valid_entry: FakeEntry, field: str, value: int
+) -> None:
+    valid_entry.data["covers"][0][field] = value
     with pytest.raises(ConfigValidationError):
         build_runtime_config(valid_entry)

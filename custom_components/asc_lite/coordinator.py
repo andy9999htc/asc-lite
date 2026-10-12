@@ -284,6 +284,7 @@ class ASCLiteCoordinator:
                 cover_id,
                 snapshot,
                 terrace_window_entity_id=self.config.terrace_window_entity_id,
+                ventilate_position=cover.ventilate_position,
                 terrace_cover_ids=terrace_cover_ids,
             )
             if window_decision is not None:
@@ -321,6 +322,7 @@ class ASCLiteCoordinator:
             cover_id,
             snapshot,
             sun_entity_id=self.config.sun_entity_id,
+            close_position=cover.close_position,
             valid_cover_ids={item.entity_id for item in self.config.covers},
             presence_entity_id=self.config.presence_entity_id,
             presence_blocks_morning_open_for=kids_cover_ids,
@@ -343,6 +345,7 @@ class ASCLiteCoordinator:
                 elevation_max=cover.shading.elevation_max,
                 enter_lux=cover.shading.thresholds.lux_enter,
                 exit_lux=cover.shading.thresholds.lux_exit,
+                shading_position=cover.shading_position,
                 non_terrace_cover_ids={
                     item.entity_id
                     for item in self.config.covers
