@@ -7,8 +7,12 @@ shutters or other action classes.
 
 from __future__ import annotations
 
+import logging
+
 from .state import StateSnapshot
 from .types import Decision
+
+_LOGGER = logging.getLogger(__name__)
 
 PARTY_RULE_ID = "R-PARTY-001"
 PARTY_REASON_CODE = "PARTY_MODE"
@@ -23,10 +27,12 @@ def evaluate_party_rule(
 ) -> Decision | None:
     """Return a no-op party-block decision when the terrace should remain open."""
     if terrace_cover_ids is not None and cover_id not in terrace_cover_ids:
+        _LOGGER.debug("ASC Lite party skipped: cover=%s not in terrace_cover_ids", cover_id)
         return None
 
     party_mode = snapshot.get(party_mode_entity_id)
     if not _is_truthy(party_mode):
+        _LOGGER.debug("ASC Lite party skipped: cover=%s party_mode=%s", cover_id, party_mode)
         return None
 
     current_position = snapshot.get(cover_id)

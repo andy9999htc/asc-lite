@@ -11,6 +11,13 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.7
+
+- Replaced fixed morning-open cutoff with dynamic sunrise-window logic: `R-ASTRO-002` is now allowed only until `sun.next_rising + 10 minutes`.
+- Added robust sunrise anchoring for daytime evaluations when Home Assistant already reports the next day's `next_rising`.
+- Kept close-target proximity guard for morning-open so custom `close_position` values remain stable with Lux shading.
+- Added regression coverage for sunrise grace-window behavior before/after cutoff.
+
 ### v0.6.6
 
 - Fixed daytime astro morning-open behavior so it no longer suppresses Lux shading after the cover is already open.

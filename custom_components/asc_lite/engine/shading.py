@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import Any
 
 from .state import StateSnapshot
 from .types import Decision
+
+_LOGGER = logging.getLogger(__name__)
 
 LUX_SHADING_IN_RULE_ID = "R-LUX-001"
 LUX_SHADING_OUT_RULE_ID = "R-LUX-002"
@@ -41,26 +44,55 @@ def evaluate_lux_shading(
     shutter and returns the relevant shade-in or shade-out decision.
     """
     if non_terrace_cover_ids is not None and cover_id not in non_terrace_cover_ids:
+        _LOGGER.debug("ASC Lite lux skipped: cover=%s not in non_terrace_cover_ids", cover_id)
         return None
 
     lux_value = _read_float(snapshot, lux_entity_id)
     if lux_value is None:
+        _LOGGER.debug("ASC Lite lux skipped: cover=%s lux_entity=%s unavailable", cover_id, lux_entity_id)
         return None
 
     sun_context = snapshot.get(sun_entity_id)
     azimuth = _read_numeric_from_mapping(sun_context, "azimuth")
     elevation = _read_numeric_from_mapping(sun_context, "elevation")
     if azimuth is not None and not (azimuth_min <= azimuth <= azimuth_max):
+        _LOGGER.debug(
+            "ASC Lite lux skipped: cover=%s azimuth=%s outside [%s, %s]",
+            cover_id,
+            azimuth,
+            azimuth_min,
+            azimuth_max,
+        )
         return None
     if elevation is not None and not (elevation_min <= elevation <= elevation_max):
+        _LOGGER.debug(
+            "ASC Lite lux skipped: cover=%s elevation=%s outside [%s, %s]",
+            cover_id,
+            elevation,
+            elevation_min,
+            elevation_max,
+        )
         return None
 
     if temp_entity_id is not None:
         temp_value = _read_float(snapshot, temp_entity_id)
         if temp_value is not None and temp_value < min_temp_c:
+            _LOGGER.debug(
+                "ASC Lite lux skipped: cover=%s temp=%s below min_temp_c=%s",
+                cover_id,
+                temp_value,
+                min_temp_c,
+            )
             return None
 
     if lux_value >= enter_lux:
+        _LOGGER.debug(
+            "ASC Lite lux shading in: cover=%s lux=%s enter_lux=%s shading_position=%s",
+            cover_id,
+            lux_value,
+            enter_lux,
+            shading_position,
+        )
         return Decision(
             rule_id=LUX_SHADING_IN_RULE_ID,
             reason_code=LUX_SHADING_IN_REASON,
@@ -69,11 +101,28 @@ def evaluate_lux_shading(
 
     if current_position is not None and current_position <= int(shading_position) and lux_value <= exit_lux:
         restore = restore_position if restore_position is not None else open_position
+        _LOGGER.debug(
+            "ASC Lite lux shading out: cover=%s lux=%s exit_lux=%s current_position=%s restore_position=%s",
+            cover_id,
+            lux_value,
+            exit_lux,
+            current_position,
+            restore,
+        )
         return Decision(
             rule_id=LUX_SHADING_OUT_RULE_ID,
             reason_code=LUX_SHADING_OUT_REASON,
             target_position=int(restore),
         )
+
+    _LOGGER.debug(
+        "ASC Lite lux skipped: cover=%s lux=%s enter_lux=%s exit_lux=%s current_position=%s",
+        cover_id,
+        lux_value,
+        enter_lux,
+        exit_lux,
+        current_position,
+    )
 
     return None
 

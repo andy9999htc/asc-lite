@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging as py_logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 from time import monotonic
 from typing import Any
 
@@ -74,6 +74,7 @@ class ASCLiteCoordinator:
     logger: py_logging.Logger
     tracker: DispatchTracker = field(default_factory=DispatchTracker)
     manual_blocks: ManualBlockManager = field(default_factory=ManualBlockManager)
+    last_target_positions: dict[str, int] = field(default_factory=dict)
     last_decisions: dict[str, RuntimeDecisionState] = field(default_factory=dict)
     _listeners: list[Callable[[], None]] = field(default_factory=list)
     _unsub_interval: Any = None
@@ -256,6 +257,8 @@ class ASCLiteCoordinator:
             tracker=self.tracker,
             command_fn=self._command_cover_position,
         )
+        if result.executed:
+            self.last_target_positions[cover_id] = int(decision.target_position or 0)
         dispatch_state = "executed" if result.executed else "suppressed"
         self.last_decisions[cover_id] = RuntimeDecisionState(
             rule_id=decision.rule_id,
@@ -323,7 +326,12 @@ class ASCLiteCoordinator:
             snapshot,
             sun_entity_id=self.config.sun_entity_id,
             close_position=cover.close_position,
-            current_position=_read_cover_position_pct(snapshot, cover_id),
+            current_datetime=datetime.now().astimezone(),
+            current_position=_effective_cover_position_pct(
+                snapshot,
+                cover_id,
+                self.last_target_positions.get(cover_id),
+            ),
             valid_cover_ids={item.entity_id for item in self.config.covers},
             presence_entity_id=self.config.presence_entity_id,
             presence_blocks_morning_open_for=kids_cover_ids,
@@ -431,6 +439,7 @@ def _read_state_value(hass: HomeAssistant, entity_id: str) -> Any:
             "state": state.state,
             "elevation": state.attributes.get("elevation"),
             "azimuth": state.attributes.get("azimuth"),
+            "next_rising": state.attributes.get("next_rising"),
         }
 
     if entity_id.startswith("cover."):
@@ -451,6 +460,28 @@ def _read_cover_position_pct(snapshot: StateSnapshot, cover_id: str) -> float | 
         return float(str(value).strip())
     except ValueError:
         return None
+
+
+def _effective_cover_position_pct(
+    snapshot: StateSnapshot,
+    cover_id: str,
+    fallback_target: int | None,
+) -> float | None:
+    """Return the best-known current cover position for rule evaluation.
+
+    Home Assistant cover state can lag immediately after a service call. If the
+    live state still reports the previous position, prefer the last target we
+    successfully dispatched so rule evaluation does not immediately undo the
+    just-applied command.
+    """
+    current_position = _read_cover_position_pct(snapshot, cover_id)
+    if current_position is not None and fallback_target is not None:
+        if abs(current_position - float(fallback_target)) >= 1:
+            # Keep the last commanded target until the live state catches up.
+            return float(fallback_target)
+    return current_position if current_position is not None else (
+        float(fallback_target) if fallback_target is not None else None
+    )
 
 
 def _is_truthy(value: Any) -> bool:

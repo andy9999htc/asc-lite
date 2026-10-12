@@ -7,8 +7,12 @@ logic. Closing the window removes the rule and normal processing can resume.
 
 from __future__ import annotations
 
+import logging
+
 from .state import StateSnapshot
 from .types import Decision
+
+_LOGGER = logging.getLogger(__name__)
 
 WINDOW_RULE_ID = "R-WIN-001"
 WINDOW_REASON_CODE = "WINDOW_OPEN"
@@ -28,12 +32,20 @@ def evaluate_window_protection(
     shutters remain unaffected by a single terrace window signal.
     """
     if terrace_cover_ids is not None and cover_id not in terrace_cover_ids:
+        _LOGGER.debug("ASC Lite window skipped: cover=%s not in terrace_cover_ids", cover_id)
         return None
 
     value = snapshot.get(terrace_window_entity_id)
     if not _is_truthy(value):
+        _LOGGER.debug("ASC Lite window skipped: cover=%s terrace_window=%s", cover_id, value)
         return None
 
+    _LOGGER.debug(
+        "ASC Lite window protection: cover=%s terrace_window=%s ventilate_position=%s",
+        cover_id,
+        value,
+        ventilate_position,
+    )
     return Decision(
         rule_id=WINDOW_RULE_ID,
         reason_code=WINDOW_REASON_CODE,

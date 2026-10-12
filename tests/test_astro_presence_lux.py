@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from custom_components.asc_lite.engine.astro import evaluate_astro_rule
 from custom_components.asc_lite.engine.presence import evaluate_presence_rule
 from custom_components.asc_lite.engine.shading import evaluate_lux_shading
@@ -111,6 +113,75 @@ def test_astro_morning_open_skips_when_cover_not_closed() -> None:
     )
 
     assert decision is None
+
+
+def test_astro_morning_open_custom_close_position_allows_only_near_close() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": 10}})
+
+    allow_decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=80,
+        current_position=80,
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    skip_decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=80,
+        current_position=35,
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert allow_decision is not None
+    assert allow_decision.rule_id == "R-ASTRO-002"
+    assert skip_decision is None
+
+
+def test_astro_morning_open_skips_after_sunrise_grace_window() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=80,
+        current_position=80,
+        current_datetime=datetime(2026, 10, 12, 5, 11, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is None
+
+
+def test_astro_morning_open_allows_within_sunrise_grace_window() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=80,
+        current_position=80,
+        current_datetime=datetime(2026, 10, 12, 5, 10, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
 
 
 def test_lux_shading_in_moves_non_terrace_cover_to_shading_position() -> None:

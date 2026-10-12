@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from .state import StateSnapshot
 from .types import Decision
+
+_LOGGER = logging.getLogger(__name__)
 
 PRESENCE_AWAY_FORCED_OPEN_RULE_ID = "R-PRES-002"
 PRESENCE_AWAY_FORCED_OPEN_REASON = "PRESENCE_AWAY_FORCED_OPEN"
@@ -28,6 +31,7 @@ def evaluate_presence_rule(
     """
     raw_value = snapshot.get(presence_entity_id)
     if raw_value is None:
+        _LOGGER.debug("ASC Lite presence skipped: cover=%s presence_entity=%s unavailable", cover_id, presence_entity_id)
         return None
 
     normalized = _normalize_state(raw_value)
@@ -35,11 +39,23 @@ def evaluate_presence_rule(
 
     if normalized in away:
         if forced_open_cover_ids is not None and cover_id in forced_open_cover_ids:
+            _LOGGER.debug(
+                "ASC Lite presence forced open: cover=%s presence=%s open_position=%s",
+                cover_id,
+                normalized,
+                open_position,
+            )
             return Decision(
                 rule_id=PRESENCE_AWAY_FORCED_OPEN_RULE_ID,
                 reason_code=PRESENCE_AWAY_FORCED_OPEN_REASON,
                 target_position=int(open_position),
             )
+
+        _LOGGER.debug(
+            "ASC Lite presence skipped: cover=%s presence=%s not in forced_open_cover_ids",
+            cover_id,
+            normalized,
+        )
 
     return None
 
