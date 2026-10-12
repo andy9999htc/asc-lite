@@ -95,6 +95,24 @@ def test_astro_morning_open_allowed_for_kids_when_presence_away() -> None:
     assert decision.target_position == 100
 
 
+def test_astro_morning_open_skips_when_cover_not_closed() -> None:
+    """Astro open should not be re-selected all day once the cover is already open."""
+    snapshot = StateSnapshot({"sun.sun": {"elevation": 10}})
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=0,
+        current_position=60,
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is None
+
+
 def test_lux_shading_in_moves_non_terrace_cover_to_shading_position() -> None:
     snapshot = StateSnapshot(
         {

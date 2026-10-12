@@ -186,7 +186,7 @@ def test_set_manual_block_service_affects_runtime_diagnostics(asyncio_run) -> No
     asyncio_run(coordinator.async_evaluate_once(trigger="service_test"))
 
     state = coordinator.get_cover_runtime_state("cover.rollladen_wohnzimmer")
-    assert state.rule_id == "R-ASTRO-002"
+    assert state.rule_id == "R-LUX-001"
     assert state.reason_code == "MANUAL_BLOCK_ACTIVE"
     assert state.result == "suppressed"
 

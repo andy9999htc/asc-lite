@@ -11,6 +11,12 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.6
+
+- Fixed daytime astro morning-open behavior so it no longer suppresses Lux shading after the cover is already open.
+- Added regression coverage to ensure astro only drives the morning transition from a closed state.
+- Kept evening astro close unchanged.
+
 ### v0.6.5
 
 - Added per-cover position settings in config JSON: `close_position`, `shading_position`, and `ventilate_position`.

@@ -323,6 +323,7 @@ class ASCLiteCoordinator:
             snapshot,
             sun_entity_id=self.config.sun_entity_id,
             close_position=cover.close_position,
+            current_position=_read_cover_position_pct(snapshot, cover_id),
             valid_cover_ids={item.entity_id for item in self.config.covers},
             presence_entity_id=self.config.presence_entity_id,
             presence_blocks_morning_open_for=kids_cover_ids,

@@ -23,6 +23,7 @@ def evaluate_astro_rule(
     open_elevation: float = 0.0,
     close_position: int | float = 0,
     open_position: int | float = 100,
+    current_position: int | float | None = None,
     valid_cover_ids: set[str] | None = None,
     presence_entity_id: str | None = None,
     presence_home_values: set[str] | tuple[str, ...] | None = None,
@@ -48,6 +49,13 @@ def evaluate_astro_rule(
         )
 
     if elevation >= open_elevation:
+        # Morning-open should act as a transition from "closed" to "open".
+        # If the shutter is already above close_position, keep astro from
+        # re-asserting open all day so lower-priority daytime rules (lux)
+        # can still apply.
+        if current_position is not None and float(current_position) > float(close_position):
+            return None
+
         # Check presence blocker for kids' morning open
         if (
             presence_entity_id is not None

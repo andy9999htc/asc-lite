@@ -152,5 +152,5 @@ def test_runtime_smoke_first_evaluation_populates_sensor_values(asyncio_run) -> 
         if sensor._attr_unique_id.endswith("cover_rollladen_wohnzimmer_last_reason_code")
     )
 
-    assert wohnzimmer_rule_sensor.native_value == "R-ASTRO-002"
-    assert wohnzimmer_reason_sensor.native_value == "ASTRO_MORNING_OPEN"
+    assert wohnzimmer_rule_sensor.native_value == "R-LUX-001"
+    assert wohnzimmer_reason_sensor.native_value == "LUX_SHADING_IN"
