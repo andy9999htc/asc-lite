@@ -28,6 +28,78 @@ def test_evening_astro_close_activates_when_sun_below_horizon() -> None:
     assert decision.target_position == 0
 
 
+def test_evening_astro_close_skips_when_cover_already_near_close_target() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": -7}})
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=80,
+        current_position=80,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is None
+
+
+def test_evening_astro_close_still_activates_when_not_near_close_target() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": -7}})
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=80,
+        current_position=35,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-001"
+    assert decision.reason_code == "ASTRO_EVENING_CLOSE"
+    assert decision.target_position == 80
+
+
+def test_evening_astro_close_allows_within_sunset_grace_window() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": -7, "next_setting": "2026-10-13T17:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=80,
+        current_position=35,
+        current_datetime=datetime(2026, 10, 12, 17, 10, tzinfo=timezone.utc),
+        evening_close_grace_minutes=10,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-001"
+
+
+def test_evening_astro_close_skips_after_sunset_grace_window() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"elevation": -7, "next_setting": "2026-10-13T17:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=80,
+        current_position=35,
+        current_datetime=datetime(2026, 10, 12, 17, 11, tzinfo=timezone.utc),
+        evening_close_grace_minutes=10,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is None
+
+
 def test_presence_away_forced_open_set_opens_designated_cover() -> None:
     snapshot = StateSnapshot({"binary_sensor.resident_home": "away"})
 

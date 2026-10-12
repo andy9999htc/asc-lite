@@ -18,6 +18,7 @@ ASTRO_EVENING_CLOSE_REASON = "ASTRO_EVENING_CLOSE"
 ASTRO_MORNING_OPEN_REASON = "ASTRO_MORNING_OPEN"
 _MORNING_OPEN_POSITION_TOLERANCE = 2.0
 _DEFAULT_MORNING_OPEN_GRACE_MINUTES = 10
+_DEFAULT_EVENING_CLOSE_GRACE_MINUTES = 10
 
 
 def evaluate_astro_rule(
@@ -36,6 +37,7 @@ def evaluate_astro_rule(
     presence_blocks_morning_open_for: set[str] | None = None,
     current_datetime: datetime | None = None,
     morning_open_grace_minutes: int = _DEFAULT_MORNING_OPEN_GRACE_MINUTES,
+    evening_close_grace_minutes: int = _DEFAULT_EVENING_CLOSE_GRACE_MINUTES,
 ) -> Decision | None:
     """Return an astro close/open decision based on the sun elevation.
 
@@ -52,6 +54,34 @@ def evaluate_astro_rule(
         return None
 
     if elevation <= close_elevation:
+        if not _is_within_evening_window(
+            snapshot,
+            sun_entity_id,
+            current_datetime=current_datetime,
+            evening_close_grace_minutes=evening_close_grace_minutes,
+        ):
+            _LOGGER.debug(
+                "ASC Lite astro evening close skipped: cover=%s current_datetime=%s grace_minutes=%s reason=outside_evening_window",
+                cover_id,
+                current_datetime,
+                evening_close_grace_minutes,
+            )
+            return None
+
+        if current_position is not None:
+            distance_to_close = abs(float(current_position) - float(close_position))
+            if distance_to_close <= _MORNING_OPEN_POSITION_TOLERANCE:
+                _LOGGER.debug(
+                    "ASC Lite astro evening close skipped: cover=%s elevation=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
+                    cover_id,
+                    elevation,
+                    current_position,
+                    close_position,
+                    round(distance_to_close, 3),
+                    _MORNING_OPEN_POSITION_TOLERANCE,
+                )
+                return None
+
         _LOGGER.debug(
             "ASC Lite astro evening close: cover=%s elevation=%s close_elevation=%s close_position=%s",
             cover_id,
@@ -162,6 +192,39 @@ def _is_within_morning_window(
     return current_datetime <= cutoff
 
 
+def _is_within_evening_window(
+    snapshot: StateSnapshot,
+    sun_entity_id: str,
+    *,
+    current_datetime: datetime | None,
+    evening_close_grace_minutes: int,
+) -> bool:
+    """Allow evening-close until sunset (close-elevation crossing) plus grace minutes."""
+    if current_datetime is None:
+        return True
+
+    if evening_close_grace_minutes < 0:
+        evening_close_grace_minutes = 0
+
+    next_setting = _read_next_setting(snapshot, sun_entity_id)
+    if next_setting is None:
+        # Keep behavior permissive when sunset timestamp is unavailable.
+        return True
+
+    if current_datetime.tzinfo is None and next_setting.tzinfo is not None:
+        current_datetime = current_datetime.replace(tzinfo=next_setting.tzinfo)
+    if current_datetime.tzinfo is not None and next_setting.tzinfo is None:
+        next_setting = next_setting.replace(tzinfo=current_datetime.tzinfo)
+
+    sunset_anchor = next_setting
+    # After sunset, HA's next_setting usually points to tomorrow.
+    if current_datetime > next_setting or (next_setting - current_datetime) > timedelta(hours=12):
+        sunset_anchor = next_setting - timedelta(days=1)
+
+    cutoff = sunset_anchor + timedelta(minutes=evening_close_grace_minutes)
+    return current_datetime <= cutoff
+
+
 def _read_next_rising(snapshot: StateSnapshot, sun_entity_id: str) -> datetime | None:
     """Read sun next_rising timestamp from snapshot sun payload."""
     value = snapshot.get(sun_entity_id)
@@ -175,6 +238,28 @@ def _read_next_rising(snapshot: StateSnapshot, sun_entity_id: str) -> datetime |
         return raw_next_rising
     if isinstance(raw_next_rising, str):
         candidate = raw_next_rising.strip()
+        if not candidate:
+            return None
+        try:
+            return datetime.fromisoformat(candidate.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return None
+
+
+def _read_next_setting(snapshot: StateSnapshot, sun_entity_id: str) -> datetime | None:
+    """Read sun next_setting timestamp from snapshot sun payload."""
+    value = snapshot.get(sun_entity_id)
+    if not isinstance(value, Mapping):
+        return None
+
+    raw_next_setting = value.get("next_setting")
+    if raw_next_setting is None:
+        return None
+    if isinstance(raw_next_setting, datetime):
+        return raw_next_setting
+    if isinstance(raw_next_setting, str):
+        candidate = raw_next_setting.strip()
         if not candidate:
             return None
         try:

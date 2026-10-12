@@ -11,6 +11,12 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.8
+
+- Added evening-close time window guard: `R-ASTRO-001` is now allowed only until `sun.next_setting + 10 minutes` and skipped afterwards.
+- Extended sun snapshot payload with `next_setting` to support deterministic evening window evaluation.
+- Added regression coverage for evening close behavior before and after the sunset grace-window cutoff.
+
 ### v0.6.7
 
 - Replaced fixed morning-open cutoff with dynamic sunrise-window logic: `R-ASTRO-002` is now allowed only until `sun.next_rising + 10 minutes`.

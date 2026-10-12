@@ -440,6 +440,7 @@ def _read_state_value(hass: HomeAssistant, entity_id: str) -> Any:
             "elevation": state.attributes.get("elevation"),
             "azimuth": state.attributes.get("azimuth"),
             "next_rising": state.attributes.get("next_rising"),
+            "next_setting": state.attributes.get("next_setting"),
         }
 
     if entity_id.startswith("cover."):
