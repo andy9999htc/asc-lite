@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from custom_components.asc_lite.engine.astro import evaluate_astro_rule
 from custom_components.asc_lite.engine.presence import evaluate_presence_rule
@@ -11,7 +11,7 @@ from custom_components.asc_lite.engine.state import StateSnapshot
 
 
 def test_evening_astro_close_activates_when_sun_below_horizon() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": -7}})
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
         "cover.terrace",
@@ -19,6 +19,7 @@ def test_evening_astro_close_activates_when_sun_below_horizon() -> None:
         sun_entity_id="sun.sun",
         close_elevation=-6,
         close_position=0,
+        current_datetime=datetime(2026, 10, 13, 18, 39, 33, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.terrace"},
     )
 
@@ -29,7 +30,7 @@ def test_evening_astro_close_activates_when_sun_below_horizon() -> None:
 
 
 def test_evening_astro_close_skips_when_cover_already_near_close_target() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": -7}})
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
         "cover.terrace",
@@ -38,6 +39,7 @@ def test_evening_astro_close_skips_when_cover_already_near_close_target() -> Non
         close_elevation=-6,
         close_position=80,
         current_position=80,
+        current_datetime=datetime(2026, 10, 13, 18, 39, 33, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.terrace"},
     )
 
@@ -45,7 +47,7 @@ def test_evening_astro_close_skips_when_cover_already_near_close_target() -> Non
 
 
 def test_evening_astro_close_still_activates_when_not_near_close_target() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": -7}})
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
         "cover.terrace",
@@ -54,6 +56,7 @@ def test_evening_astro_close_still_activates_when_not_near_close_target() -> Non
         close_elevation=-6,
         close_position=80,
         current_position=35,
+        current_datetime=datetime(2026, 10, 13, 18, 39, 33, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.terrace"},
     )
 
@@ -64,7 +67,7 @@ def test_evening_astro_close_still_activates_when_not_near_close_target() -> Non
 
 
 def test_evening_astro_close_allows_within_sunset_grace_window() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": -7, "next_setting": "2026-10-13T17:00:00+00:00"}})
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T17:00:00+00:00"}})
 
     decision = evaluate_astro_rule(
         "cover.terrace",
@@ -83,7 +86,7 @@ def test_evening_astro_close_allows_within_sunset_grace_window() -> None:
 
 
 def test_evening_astro_close_skips_after_sunset_grace_window() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": -7, "next_setting": "2026-10-13T17:00:00+00:00"}})
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T17:00:00+00:00"}})
 
     decision = evaluate_astro_rule(
         "cover.terrace",
@@ -98,6 +101,58 @@ def test_evening_astro_close_skips_after_sunset_grace_window() -> None:
     )
 
     assert decision is None
+
+
+def test_evening_astro_close_skips_before_sunrise_even_when_elevation_is_low() -> None:
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {
+                "next_rising": "2026-10-13T07:44:00+02:00",
+                "next_setting": "2026-10-13T18:36:00+02:00",
+            }
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=20,
+        current_position=100,
+        current_datetime=datetime(2026, 10, 13, 6, 39, 33, tzinfo=timezone(timedelta(hours=2))),
+        evening_close_grace_minutes=10,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is None
+
+
+def test_evening_astro_close_triggers_even_when_sun_is_above_close_elevation() -> None:
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {
+                "next_setting": "2026-10-13T18:36:00+02:00",
+            }
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.terrace",
+        snapshot,
+        sun_entity_id="sun.sun",
+        close_elevation=-6,
+        close_position=20,
+        current_position=100,
+        current_datetime=datetime(2026, 10, 13, 18, 39, 33, tzinfo=timezone(timedelta(hours=2))),
+        evening_close_grace_minutes=10,
+        valid_cover_ids={"cover.terrace"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-001"
+    assert decision.reason_code == "ASTRO_EVENING_CLOSE"
+    assert decision.target_position == 20
 
 
 def test_presence_away_forced_open_set_opens_designated_cover() -> None:
@@ -122,7 +177,10 @@ def test_astro_morning_open_blocked_for_kids_when_presence_home() -> None:
     """When presence=home, astro morning open is blocked for kids shutters."""
     snapshot = StateSnapshot(
         {
-            "sun.sun": {"elevation": 5},
+            "sun.sun": {
+                "next_rising": "2026-10-13T07:44:00+02:00",
+                "next_setting": "2026-10-13T18:36:00+02:00",
+            },
             "binary_sensor.resident_home": "on",
         }
     )
@@ -133,6 +191,7 @@ def test_astro_morning_open_blocked_for_kids_when_presence_home() -> None:
         sun_entity_id="sun.sun",
         open_elevation=0,
         open_position=100,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.amelie_fenster"},
         presence_entity_id="binary_sensor.resident_home",
         presence_home_values={"home", "on", "present"},
@@ -146,7 +205,10 @@ def test_astro_morning_open_allowed_for_kids_when_presence_away() -> None:
     """When presence=away, astro morning open is allowed for kids shutters."""
     snapshot = StateSnapshot(
         {
-            "sun.sun": {"elevation": 5},
+            "sun.sun": {
+                "next_rising": "2026-10-13T07:44:00+02:00",
+                "next_setting": "2026-10-13T18:36:00+02:00",
+            },
             "binary_sensor.resident_home": "away",
         }
     )
@@ -157,6 +219,40 @@ def test_astro_morning_open_allowed_for_kids_when_presence_away() -> None:
         sun_entity_id="sun.sun",
         open_elevation=0,
         open_position=100,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
+        valid_cover_ids={"cover.amelie_fenster"},
+        presence_entity_id="binary_sensor.resident_home",
+        presence_home_values={"home", "on", "present"},
+        presence_blocks_morning_open_for={"cover.amelie_fenster"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
+    assert decision.reason_code == "ASTRO_MORNING_OPEN"
+    assert decision.target_position == 100
+
+
+def test_astro_morning_open_triggers_even_when_sun_is_below_open_elevation() -> None:
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {
+                "elevation": -3.5,
+                "next_rising": "2026-10-13T07:44:00+02:00",
+                "next_setting": "2026-10-13T18:36:00+02:00",
+            },
+            "binary_sensor.resident_home": "away",
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.amelie_fenster",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_elevation=0,
+        open_position=100,
+        close_position=0,
+        current_position=0,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.amelie_fenster"},
         presence_entity_id="binary_sensor.resident_home",
         presence_home_values={"home", "on", "present"},
@@ -171,7 +267,7 @@ def test_astro_morning_open_allowed_for_kids_when_presence_away() -> None:
 
 def test_astro_morning_open_skips_when_cover_not_closed() -> None:
     """Astro open should not be re-selected all day once the cover is already open."""
-    snapshot = StateSnapshot({"sun.sun": {"elevation": 10}})
+    snapshot = StateSnapshot({"sun.sun": {"next_rising": "2026-10-13T07:44:00+02:00", "next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
         "cover.wohnzimmer",
@@ -181,6 +277,7 @@ def test_astro_morning_open_skips_when_cover_not_closed() -> None:
         open_position=100,
         close_position=0,
         current_position=60,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
@@ -188,7 +285,7 @@ def test_astro_morning_open_skips_when_cover_not_closed() -> None:
 
 
 def test_astro_morning_open_custom_close_position_allows_only_near_close() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": 10}})
+    snapshot = StateSnapshot({"sun.sun": {"next_rising": "2026-10-13T07:44:00+02:00", "next_setting": "2026-10-13T18:36:00+02:00"}})
 
     allow_decision = evaluate_astro_rule(
         "cover.wohnzimmer",
@@ -198,6 +295,7 @@ def test_astro_morning_open_custom_close_position_allows_only_near_close() -> No
         open_position=100,
         close_position=80,
         current_position=80,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
@@ -209,6 +307,7 @@ def test_astro_morning_open_custom_close_position_allows_only_near_close() -> No
         open_position=100,
         close_position=80,
         current_position=35,
+        current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
@@ -218,7 +317,9 @@ def test_astro_morning_open_custom_close_position_allows_only_near_close() -> No
 
 
 def test_astro_morning_open_skips_after_sunrise_grace_window() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00"}})
+    snapshot = StateSnapshot(
+        {"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00", "next_setting": "2026-10-13T17:00:00+00:00"}}
+    )
 
     decision = evaluate_astro_rule(
         "cover.wohnzimmer",
@@ -237,7 +338,9 @@ def test_astro_morning_open_skips_after_sunrise_grace_window() -> None:
 
 
 def test_astro_morning_open_allows_within_sunrise_grace_window() -> None:
-    snapshot = StateSnapshot({"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00"}})
+    snapshot = StateSnapshot(
+        {"sun.sun": {"elevation": 10, "next_rising": "2026-10-13T05:00:00+00:00", "next_setting": "2026-10-13T17:00:00+00:00"}}
+    )
 
     decision = evaluate_astro_rule(
         "cover.wohnzimmer",

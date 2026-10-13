@@ -11,6 +11,11 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.9
+
+- Changed astro open/close to time-window matching based on `sun.next_rising` and `sun.next_setting` so `R-ASTRO-001` and `R-ASTRO-002` no longer depend on sun elevation.
+- Added regression coverage for time-based astro matching in morning and evening windows.
+
 ### v0.6.8
 
 - Added evening-close time window guard: `R-ASTRO-001` is now allowed only until `sun.next_setting + 10 minutes` and skipped afterwards.

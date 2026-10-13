@@ -39,7 +39,7 @@ def evaluate_astro_rule(
     morning_open_grace_minutes: int = _DEFAULT_MORNING_OPEN_GRACE_MINUTES,
     evening_close_grace_minutes: int = _DEFAULT_EVENING_CLOSE_GRACE_MINUTES,
 ) -> Decision | None:
-    """Return an astro close/open decision based on the sun elevation.
+    """Return an astro close/open decision based on sunrise and sunset windows.
 
     For morning open on kids' shutters, presence can block the action.
     When presence=home and cover is a kid's shutter, astro morning open is blocked.
@@ -48,33 +48,18 @@ def evaluate_astro_rule(
         _LOGGER.debug("ASC Lite astro skipped: cover=%s not in valid_cover_ids", cover_id)
         return None
 
-    elevation = _read_elevation(snapshot, sun_entity_id)
-    if elevation is None:
-        _LOGGER.debug("ASC Lite astro skipped: cover=%s sun=%s elevation unavailable", cover_id, sun_entity_id)
-        return None
-
-    if elevation <= close_elevation:
-        if not _is_within_evening_window(
-            snapshot,
-            sun_entity_id,
-            current_datetime=current_datetime,
-            evening_close_grace_minutes=evening_close_grace_minutes,
-        ):
-            _LOGGER.debug(
-                "ASC Lite astro evening close skipped: cover=%s current_datetime=%s grace_minutes=%s reason=outside_evening_window",
-                cover_id,
-                current_datetime,
-                evening_close_grace_minutes,
-            )
-            return None
-
+    if _is_within_evening_window(
+        snapshot,
+        sun_entity_id,
+        current_datetime=current_datetime,
+        evening_close_grace_minutes=evening_close_grace_minutes,
+    ):
         if current_position is not None:
             distance_to_close = abs(float(current_position) - float(close_position))
             if distance_to_close <= _MORNING_OPEN_POSITION_TOLERANCE:
                 _LOGGER.debug(
-                    "ASC Lite astro evening close skipped: cover=%s elevation=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
+                    "ASC Lite astro evening close skipped: cover=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
                     cover_id,
-                    elevation,
                     current_position,
                     close_position,
                     round(distance_to_close, 3),
@@ -83,10 +68,8 @@ def evaluate_astro_rule(
                 return None
 
         _LOGGER.debug(
-            "ASC Lite astro evening close: cover=%s elevation=%s close_elevation=%s close_position=%s",
+            "ASC Lite astro evening close: cover=%s close_position=%s",
             cover_id,
-            elevation,
-            close_elevation,
             close_position,
         )
         return Decision(
@@ -95,65 +78,60 @@ def evaluate_astro_rule(
             target_position=int(close_position),
         )
 
-    if elevation >= open_elevation:
-        if not _is_within_morning_window(
-            snapshot,
-            sun_entity_id,
-            current_datetime=current_datetime,
-            morning_open_grace_minutes=morning_open_grace_minutes,
-        ):
+    if not _is_within_morning_window(
+        snapshot,
+        sun_entity_id,
+        current_datetime=current_datetime,
+        morning_open_grace_minutes=morning_open_grace_minutes,
+    ):
+        _LOGGER.debug(
+            "ASC Lite astro morning open skipped: cover=%s current_datetime=%s grace_minutes=%s reason=outside_morning_window",
+            cover_id,
+            current_datetime,
+            morning_open_grace_minutes,
+        )
+        return None
+
+    # Morning-open should only trigger when the cover is effectively at the
+    # configured close target. Otherwise daytime rules (for example lux
+    # shading) can oscillate against astro open.
+    if current_position is not None:
+        distance_to_close = abs(float(current_position) - float(close_position))
+        if distance_to_close > _MORNING_OPEN_POSITION_TOLERANCE:
             _LOGGER.debug(
-                "ASC Lite astro morning open skipped: cover=%s current_datetime=%s grace_minutes=%s reason=outside_morning_window",
+                "ASC Lite astro morning open skipped: cover=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
                 cover_id,
-                current_datetime,
-                morning_open_grace_minutes,
+                current_position,
+                close_position,
+                round(distance_to_close, 3),
+                _MORNING_OPEN_POSITION_TOLERANCE,
             )
             return None
 
-        # Morning-open should only trigger when the cover is effectively at the
-        # configured close target. Otherwise daytime rules (for example lux
-        # shading) can oscillate against astro open.
-        if current_position is not None:
-            distance_to_close = abs(float(current_position) - float(close_position))
-            if distance_to_close > _MORNING_OPEN_POSITION_TOLERANCE:
-                _LOGGER.debug(
-                    "ASC Lite astro morning open skipped: cover=%s elevation=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
-                    cover_id,
-                    elevation,
-                    current_position,
-                    close_position,
-                    round(distance_to_close, 3),
-                    _MORNING_OPEN_POSITION_TOLERANCE,
-                )
-                return None
+    # Check presence blocker for kids' morning open
+    if (
+        presence_entity_id is not None
+        and presence_blocks_morning_open_for is not None
+        and cover_id in presence_blocks_morning_open_for
+    ):
+        if _is_presence_home(snapshot, presence_entity_id, presence_home_values):
+            _LOGGER.debug(
+                "ASC Lite astro morning open blocked by presence: cover=%s presence_entity=%s",
+                cover_id,
+                presence_entity_id,
+            )
+            return None
 
-        # Check presence blocker for kids' morning open
-        if (
-            presence_entity_id is not None
-            and presence_blocks_morning_open_for is not None
-            and cover_id in presence_blocks_morning_open_for
-        ):
-            if _is_presence_home(snapshot, presence_entity_id, presence_home_values):
-                _LOGGER.debug(
-                    "ASC Lite astro morning open blocked by presence: cover=%s presence_entity=%s elevation=%s",
-                    cover_id,
-                    presence_entity_id,
-                    elevation,
-                )
-                return None
-
-        _LOGGER.debug(
-            "ASC Lite astro morning open: cover=%s elevation=%s open_elevation=%s open_position=%s",
-            cover_id,
-            elevation,
-            open_elevation,
-            open_position,
-        )
-        return Decision(
-            rule_id=ASTRO_MORNING_OPEN_RULE_ID,
-            reason_code=ASTRO_MORNING_OPEN_REASON,
-            target_position=int(open_position),
-        )
+    _LOGGER.debug(
+        "ASC Lite astro morning open: cover=%s open_position=%s",
+        cover_id,
+        open_position,
+    )
+    return Decision(
+        rule_id=ASTRO_MORNING_OPEN_RULE_ID,
+        reason_code=ASTRO_MORNING_OPEN_REASON,
+        target_position=int(open_position),
+    )
 
     return None
 
@@ -165,17 +143,16 @@ def _is_within_morning_window(
     current_datetime: datetime | None,
     morning_open_grace_minutes: int,
 ) -> bool:
-    """Allow morning-open until sunrise (open-elevation crossing) plus grace minutes."""
+    """Allow morning-open from sunrise through sunrise plus grace minutes."""
     if current_datetime is None:
-        return True
+        return False
 
     if morning_open_grace_minutes < 0:
         morning_open_grace_minutes = 0
 
     next_rising = _read_next_rising(snapshot, sun_entity_id)
     if next_rising is None:
-        # Keep behavior permissive when sunrise timestamp is unavailable.
-        return True
+        return False
 
     if current_datetime.tzinfo is None and next_rising.tzinfo is not None:
         current_datetime = current_datetime.replace(tzinfo=next_rising.tzinfo)
@@ -184,12 +161,12 @@ def _is_within_morning_window(
 
     sunrise_anchor = next_rising
     # After sunrise, HA's next_rising usually points to tomorrow.
-    # If the next rising is far in the future, anchor to previous day.
-    if current_datetime > next_rising or (next_rising - current_datetime) > timedelta(hours=12):
+    # If the next rising is far in the future, anchor to the previous day.
+    if (next_rising - current_datetime) > timedelta(hours=12):
         sunrise_anchor = next_rising - timedelta(days=1)
 
     cutoff = sunrise_anchor + timedelta(minutes=morning_open_grace_minutes)
-    return current_datetime <= cutoff
+    return sunrise_anchor <= current_datetime <= cutoff
 
 
 def _is_within_evening_window(
@@ -199,17 +176,30 @@ def _is_within_evening_window(
     current_datetime: datetime | None,
     evening_close_grace_minutes: int,
 ) -> bool:
-    """Allow evening-close until sunset (close-elevation crossing) plus grace minutes."""
+    """Allow evening-close from sunset through sunset plus grace minutes."""
     if current_datetime is None:
-        return True
+        return False
 
     if evening_close_grace_minutes < 0:
         evening_close_grace_minutes = 0
 
+    next_rising = _read_next_rising(snapshot, sun_entity_id)
+    if next_rising is not None:
+        if current_datetime.tzinfo is None and next_rising.tzinfo is not None:
+            current_datetime = current_datetime.replace(tzinfo=next_rising.tzinfo)
+        if current_datetime.tzinfo is not None and next_rising.tzinfo is None:
+            next_rising = next_rising.replace(tzinfo=current_datetime.tzinfo)
+
+        sunrise_anchor = next_rising
+        if current_datetime > next_rising or (next_rising - current_datetime) > timedelta(hours=12):
+            sunrise_anchor = next_rising - timedelta(days=1)
+
+        if current_datetime < sunrise_anchor:
+            return False
+
     next_setting = _read_next_setting(snapshot, sun_entity_id)
     if next_setting is None:
-        # Keep behavior permissive when sunset timestamp is unavailable.
-        return True
+        return False
 
     if current_datetime.tzinfo is None and next_setting.tzinfo is not None:
         current_datetime = current_datetime.replace(tzinfo=next_setting.tzinfo)
@@ -218,11 +208,11 @@ def _is_within_evening_window(
 
     sunset_anchor = next_setting
     # After sunset, HA's next_setting usually points to tomorrow.
-    if current_datetime > next_setting or (next_setting - current_datetime) > timedelta(hours=12):
+    if (next_setting - current_datetime) > timedelta(hours=12):
         sunset_anchor = next_setting - timedelta(days=1)
 
     cutoff = sunset_anchor + timedelta(minutes=evening_close_grace_minutes)
-    return current_datetime <= cutoff
+    return sunset_anchor <= current_datetime <= cutoff
 
 
 def _read_next_rising(snapshot: StateSnapshot, sun_entity_id: str) -> datetime | None:

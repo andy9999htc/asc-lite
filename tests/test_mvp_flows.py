@@ -7,6 +7,8 @@ pilot acceptance without requiring a full Home Assistant runtime.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from custom_components.asc_lite.engine.astro import evaluate_astro_rule
 from custom_components.asc_lite.engine.party import evaluate_party_rule
 from custom_components.asc_lite.engine.position import denormalize_pct_to_native, normalize_native_to_pct
@@ -84,10 +86,11 @@ def test_astro_and_lux_rules_follow_pilot_gate_conditions() -> None:
     """Sun and lux decisions are accepted only when the configured window/gate conditions match."""
     astro = evaluate_astro_rule(
         "cover.wohnzimmer",
-        StateSnapshot({"sun.sun": {"elevation": -7.0}}),
+        StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T18:36:00+02:00"}}),
         sun_entity_id="sun.sun",
         close_elevation=-6,
         close_position=0,
+        current_datetime=datetime(2026, 10, 13, 18, 39, 33, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.wohnzimmer"},
     )
     lux = evaluate_lux_shading(
