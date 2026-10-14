@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from custom_components.asc_lite.engine.astro import evaluate_astro_rule
@@ -326,23 +327,61 @@ def run_m3_astro_presence_lux_sample(cfg: Any) -> None:
     temp_entity_id = cfg.outdoor_temp_entity_id or "sensor.outdoor_temp"
     logger = logging.getLogger("custom_components.asc_lite.standalone")
 
-    astro_snapshot = build_state_snapshot(
-        {sun_entity_id: {"elevation": -7.0}},
-        defaults={sun_entity_id: {"elevation": 0.0}},
+    morning_now = "2026-10-14T07:05:00+02:00"
+    morning_next_rising = "2026-10-14T07:00:00+02:00"
+    morning_snapshot = build_state_snapshot(
+        {
+            sun_entity_id: {
+                "elevation": 5.0,
+                "next_rising": morning_next_rising,
+                "next_setting": "2026-10-14T18:36:00+02:00",
+            }
+        },
+        defaults={sun_entity_id: {"next_rising": morning_next_rising}},
     )
-    astro_decision = evaluate_astro_rule(
+    morning_decision = evaluate_astro_rule(
         cover_id,
-        astro_snapshot,
+        morning_snapshot,
         sun_entity_id=sun_entity_id,
         close_elevation=-6,
         close_position=0,
         valid_cover_ids={cover_id},
+        current_datetime=datetime.fromisoformat(morning_now),
     )
-    print("\nM3 astro dry-run:")
-    print(f"- sun elevation: {astro_snapshot.get(sun_entity_id)['elevation']}")
-    print(f"- selected rule: {astro_decision.rule_id if astro_decision else 'none'}")
-    print(f"- target position: {astro_decision.target_position if astro_decision else 'none'}")
-    log_decision(logger, cover_id, "sun_elevation", astro_decision, result="selected")
+    print("\nM3 astro morning-window dry-run:")
+    print(f"- next_rising: {morning_snapshot.get(sun_entity_id)['next_rising']}")
+    print(f"- current time: {morning_now}")
+    print(f"- selected rule: {morning_decision.rule_id if morning_decision else 'none'}")
+    print(f"- target position: {morning_decision.target_position if morning_decision else 'none'}")
+    log_decision(logger, cover_id, "sun_morning_window", morning_decision, result="selected")
+
+    evening_now = "2026-10-14T18:40:00+02:00"
+    evening_next_setting = "2026-10-14T18:36:00+02:00"
+    evening_snapshot = build_state_snapshot(
+        {
+            sun_entity_id: {
+                "elevation": -2.0,
+                "next_rising": "2026-10-15T07:02:00+02:00",
+                "next_setting": evening_next_setting,
+            }
+        },
+        defaults={sun_entity_id: {"next_setting": evening_next_setting}},
+    )
+    evening_decision = evaluate_astro_rule(
+        cover_id,
+        evening_snapshot,
+        sun_entity_id=sun_entity_id,
+        close_elevation=-6,
+        close_position=0,
+        valid_cover_ids={cover_id},
+        current_datetime=datetime.fromisoformat(evening_now),
+    )
+    print("\nM3 astro evening-window dry-run:")
+    print(f"- next_setting: {evening_snapshot.get(sun_entity_id)['next_setting']}")
+    print(f"- current time: {evening_now}")
+    print(f"- selected rule: {evening_decision.rule_id if evening_decision else 'none'}")
+    print(f"- target position: {evening_decision.target_position if evening_decision else 'none'}")
+    log_decision(logger, cover_id, "sun_evening_window", evening_decision, result="selected")
 
     presence_snapshot = build_state_snapshot(
         {presence_entity_id: "away"},

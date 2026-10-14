@@ -11,6 +11,13 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.10
+
+- Enforced astro morning-open and evening-close as time-window must-rules independent of current cover position.
+- Added runtime once-per-day guard for astro decisions per cover/rule with suppression reason `ASTRO_ALREADY_EXECUTED_TODAY`.
+- Updated standalone validation script to demonstrate sunrise/sunset window based astro decisions.
+- Aligned decision documentation with runtime behavior in `ASC_LITE_DECISION_TABLE.md`.
+
 ### v0.6.9
 
 - Changed astro open/close to time-window matching based on `sun.next_rising` and `sun.next_setting` so `R-ASTRO-001` and `R-ASTRO-002` no longer depend on sun elevation.
@@ -117,6 +124,18 @@ ASC-lite is a focused Home Assistant integration that implements the required su
   - per-shutter shading settings validation
 - Architecture targets deterministic rule priority and reason-code based decisions.
 - No hardcoded Home Assistant entity IDs in integration source.
+
+## Rule behavior (current)
+
+- Morning open (`R-ASTRO-002`) and evening close (`R-ASTRO-001`) are time-window based must-rules.
+- Morning open is allowed from `sun.next_rising` until `sun.next_rising + 10 minutes`.
+- Evening close is allowed from `sun.next_setting` until `sun.next_setting + 10 minutes`.
+- Astro open/close decisions are executed once per day per cover and per astro rule in runtime.
+- The only functional blockers are:
+  - Presence blocker for configured kids shutters in morning open (`presence=home` blocks `R-ASTRO-002`).
+  - Party/window precedence behavior for terrace shutters (handled by `R-WIN-001` and `R-PARTY-001` before astro).
+
+Detailed rule matrix and precedence are documented in `ASC_LITE_DECISION_TABLE.md`.
 
 ## Current status
 

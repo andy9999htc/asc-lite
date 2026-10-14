@@ -53,6 +53,8 @@ _SUPPRESSED_BY_MANUAL_RULES = {
     "R-PRES-003",
 }
 _UNAVAILABLE_COVER_REASON = "COVER_UNAVAILABLE"
+_ASTRO_ONCE_PER_DAY_REASON = "ASTRO_ALREADY_EXECUTED_TODAY"
+_ASTRO_ONCE_PER_DAY_RULES = {"R-ASTRO-001", "R-ASTRO-002"}
 
 
 @dataclass(slots=True)
@@ -76,6 +78,7 @@ class ASCLiteCoordinator:
     manual_blocks: ManualBlockManager = field(default_factory=ManualBlockManager)
     last_target_positions: dict[str, int] = field(default_factory=dict)
     last_decisions: dict[str, RuntimeDecisionState] = field(default_factory=dict)
+    astro_rule_last_run_day: dict[tuple[str, str], str] = field(default_factory=dict)
     _listeners: list[Callable[[], None]] = field(default_factory=list)
     _unsub_interval: Any = None
 
@@ -245,6 +248,22 @@ class ASCLiteCoordinator:
             )
             return
 
+        if self._should_suppress_astro_once_per_day(cover_id, decision):
+            self.last_decisions[cover_id] = RuntimeDecisionState(
+                rule_id=decision.rule_id,
+                reason_code=_ASTRO_ONCE_PER_DAY_REASON,
+                result="suppressed",
+            )
+            log_decision(
+                self.logger,
+                cover_id,
+                trigger,
+                decision,
+                result="astro_once_per_day",
+                metadata={"reason_code": _ASTRO_ONCE_PER_DAY_REASON},
+            )
+            return
+
         native_target = denormalize_pct_to_native(
             float(decision.target_position or 0),
             cover.scale,
@@ -260,6 +279,7 @@ class ASCLiteCoordinator:
         if result.executed:
             self.last_target_positions[cover_id] = int(decision.target_position or 0)
         dispatch_state = "executed" if result.executed else "suppressed"
+        self._mark_astro_executed_today(cover_id, decision)
         self.last_decisions[cover_id] = RuntimeDecisionState(
             rule_id=decision.rule_id,
             reason_code=decision.reason_code,
@@ -426,6 +446,19 @@ class ASCLiteCoordinator:
             return False
         self.manual_blocks.clear_expired(now=monotonic())
         return self.manual_blocks.is_active(cover_id, now=monotonic())
+
+    def _should_suppress_astro_once_per_day(self, cover_id: str, decision: Decision) -> bool:
+        if decision.rule_id not in _ASTRO_ONCE_PER_DAY_RULES:
+            return False
+        today = datetime.now().astimezone().date().isoformat()
+        key = (cover_id, decision.rule_id)
+        return self.astro_rule_last_run_day.get(key) == today
+
+    def _mark_astro_executed_today(self, cover_id: str, decision: Decision) -> None:
+        if decision.rule_id not in _ASTRO_ONCE_PER_DAY_RULES:
+            return
+        today = datetime.now().astimezone().date().isoformat()
+        self.astro_rule_last_run_day[(cover_id, decision.rule_id)] = today
 
 
 def _read_state_value(hass: HomeAssistant, entity_id: str) -> Any:

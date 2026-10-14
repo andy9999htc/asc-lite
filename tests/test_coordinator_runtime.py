@@ -9,6 +9,7 @@ from custom_components.asc_lite.coordinator import (
     _is_forced_open_cover,
     _is_terrace_cover,
 )
+from custom_components.asc_lite.engine.types import Decision
 from custom_components.asc_lite.models import (
     CoverConfig,
     GlobalConfig,
@@ -216,3 +217,54 @@ def test_unavailable_cover_is_skipped_without_dispatch(asyncio_run) -> None:
         call[2].get("entity_id") != "cover.rollladen_wohnzimmer"
         for call in coordinator.hass.services.calls
     )
+
+
+def test_astro_rule_runs_only_once_per_day_per_cover(asyncio_run, monkeypatch) -> None:
+    def _fake_astro(*args, **kwargs):  # type: ignore[no-untyped-def]
+        return Decision(
+            rule_id="R-ASTRO-002",
+            reason_code="ASTRO_MORNING_OPEN",
+            target_position=100,
+        )
+
+    monkeypatch.setattr("custom_components.asc_lite.coordinator.evaluate_astro_rule", _fake_astro)
+
+    coordinator = ASCLiteCoordinator(
+        hass=FakeHass(
+            {
+                "input_boolean.asc_auto_enabled": FakeState("on", {}),
+                "input_boolean.asc_presence_dummy": FakeState("on", {}),
+                "input_boolean.asc_party_mode": FakeState("off", {}),
+                "binary_sensor.terrace_window": FakeState("off", {}),
+                "sensor.outdoor_temp": FakeState("22", {}),
+                "sensor.lux_wz": FakeState("100", {}),
+                "sensor.lux_ez": FakeState("100", {}),
+                "sun.sun": FakeState(
+                    "above_horizon",
+                    {
+                        "elevation": 10,
+                        "azimuth": 150,
+                        "next_rising": "2026-10-14T07:44:00+02:00",
+                        "next_setting": "2026-10-14T18:36:00+02:00",
+                    },
+                ),
+                "cover.rollladen_terrasse": FakeState("open", {"current_position": 20}),
+                "cover.rollladen_wohnzimmer": FakeState("open", {"current_position": 20}),
+                "cover.rollladen_amelie_fenster": FakeState("open", {"current_position": 20}),
+            }
+        ),
+        entry=FakeEntry("entry-5"),
+        config=_config(),
+        logger=__import__("logging").getLogger("asc_lite.test"),
+    )
+
+    asyncio_run(coordinator.async_evaluate_once(trigger="unit"))
+    first_call_count = len(coordinator.hass.services.calls)
+
+    asyncio_run(coordinator.async_evaluate_once(trigger="unit"))
+    second_call_count = len(coordinator.hass.services.calls)
+
+    assert first_call_count > 0
+    assert second_call_count == first_call_count
+    assert coordinator.last_decisions["cover.rollladen_wohnzimmer"].reason_code == "ASTRO_ALREADY_EXECUTED_TODAY"
+    assert coordinator.last_decisions["cover.rollladen_wohnzimmer"].result == "suppressed"

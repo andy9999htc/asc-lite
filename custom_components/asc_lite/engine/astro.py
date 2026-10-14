@@ -16,7 +16,6 @@ ASTRO_EVENING_CLOSE_RULE_ID = "R-ASTRO-001"
 ASTRO_MORNING_OPEN_RULE_ID = "R-ASTRO-002"
 ASTRO_EVENING_CLOSE_REASON = "ASTRO_EVENING_CLOSE"
 ASTRO_MORNING_OPEN_REASON = "ASTRO_MORNING_OPEN"
-_MORNING_OPEN_POSITION_TOLERANCE = 2.0
 _DEFAULT_MORNING_OPEN_GRACE_MINUTES = 10
 _DEFAULT_EVENING_CLOSE_GRACE_MINUTES = 10
 
@@ -54,19 +53,6 @@ def evaluate_astro_rule(
         current_datetime=current_datetime,
         evening_close_grace_minutes=evening_close_grace_minutes,
     ):
-        if current_position is not None:
-            distance_to_close = abs(float(current_position) - float(close_position))
-            if distance_to_close <= _MORNING_OPEN_POSITION_TOLERANCE:
-                _LOGGER.debug(
-                    "ASC Lite astro evening close skipped: cover=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
-                    cover_id,
-                    current_position,
-                    close_position,
-                    round(distance_to_close, 3),
-                    _MORNING_OPEN_POSITION_TOLERANCE,
-                )
-                return None
-
         _LOGGER.debug(
             "ASC Lite astro evening close: cover=%s close_position=%s",
             cover_id,
@@ -91,22 +77,6 @@ def evaluate_astro_rule(
             morning_open_grace_minutes,
         )
         return None
-
-    # Morning-open should only trigger when the cover is effectively at the
-    # configured close target. Otherwise daytime rules (for example lux
-    # shading) can oscillate against astro open.
-    if current_position is not None:
-        distance_to_close = abs(float(current_position) - float(close_position))
-        if distance_to_close > _MORNING_OPEN_POSITION_TOLERANCE:
-            _LOGGER.debug(
-                "ASC Lite astro morning open skipped: cover=%s current_position=%s close_position=%s distance_to_close=%s tolerance=%s",
-                cover_id,
-                current_position,
-                close_position,
-                round(distance_to_close, 3),
-                _MORNING_OPEN_POSITION_TOLERANCE,
-            )
-            return None
 
     # Check presence blocker for kids' morning open
     if (

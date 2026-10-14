@@ -29,7 +29,7 @@ def test_evening_astro_close_activates_when_sun_below_horizon() -> None:
     assert decision.target_position == 0
 
 
-def test_evening_astro_close_skips_when_cover_already_near_close_target() -> None:
+def test_evening_astro_close_runs_when_cover_already_near_close_target() -> None:
     snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
@@ -43,7 +43,8 @@ def test_evening_astro_close_skips_when_cover_already_near_close_target() -> Non
         valid_cover_ids={"cover.terrace"},
     )
 
-    assert decision is None
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-001"
 
 
 def test_evening_astro_close_still_activates_when_not_near_close_target() -> None:
@@ -265,8 +266,8 @@ def test_astro_morning_open_triggers_even_when_sun_is_below_open_elevation() -> 
     assert decision.target_position == 100
 
 
-def test_astro_morning_open_skips_when_cover_not_closed() -> None:
-    """Astro open should not be re-selected all day once the cover is already open."""
+def test_astro_morning_open_runs_when_cover_not_closed() -> None:
+    """Astro open should run in the morning window, even from intermediate positions."""
     snapshot = StateSnapshot({"sun.sun": {"next_rising": "2026-10-13T07:44:00+02:00", "next_setting": "2026-10-13T18:36:00+02:00"}})
 
     decision = evaluate_astro_rule(
@@ -281,25 +282,26 @@ def test_astro_morning_open_skips_when_cover_not_closed() -> None:
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
-    assert decision is None
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
 
 
-def test_astro_morning_open_custom_close_position_allows_only_near_close() -> None:
+def test_astro_morning_open_custom_close_position_runs_for_intermediate_position() -> None:
     snapshot = StateSnapshot({"sun.sun": {"next_rising": "2026-10-13T07:44:00+02:00", "next_setting": "2026-10-13T18:36:00+02:00"}})
 
-    allow_decision = evaluate_astro_rule(
+    already_open_decision = evaluate_astro_rule(
         "cover.wohnzimmer",
         snapshot,
         sun_entity_id="sun.sun",
         open_elevation=0,
         open_position=100,
         close_position=80,
-        current_position=80,
+        current_position=100,
         current_datetime=datetime(2026, 10, 13, 7, 44, 30, tzinfo=timezone(timedelta(hours=2))),
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
-    skip_decision = evaluate_astro_rule(
+    run_decision = evaluate_astro_rule(
         "cover.wohnzimmer",
         snapshot,
         sun_entity_id="sun.sun",
@@ -311,9 +313,10 @@ def test_astro_morning_open_custom_close_position_allows_only_near_close() -> No
         valid_cover_ids={"cover.wohnzimmer"},
     )
 
-    assert allow_decision is not None
-    assert allow_decision.rule_id == "R-ASTRO-002"
-    assert skip_decision is None
+    assert already_open_decision is not None
+    assert already_open_decision.rule_id == "R-ASTRO-002"
+    assert run_decision is not None
+    assert run_decision.rule_id == "R-ASTRO-002"
 
 
 def test_astro_morning_open_skips_after_sunrise_grace_window() -> None:
