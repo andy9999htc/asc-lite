@@ -540,3 +540,35 @@ def test_lux_shading_does_not_restore_when_not_currently_shaded() -> None:
     )
 
     assert decision is None
+
+
+def test_lux_shading_does_not_restore_after_evening_close_position() -> None:
+    """A cover closed by evening astro rule must not be treated as currently shaded."""
+    decision = evaluate_lux_shading(
+        "cover.wohnzimmer",
+        StateSnapshot(
+            {
+                "sensor.lux_wz": 120,
+                "sun.sun": {"azimuth": 40, "elevation": 28},
+                "sensor.outdoor_temp": 22,
+            }
+        ),
+        lux_entity_id="sensor.lux_wz",
+        sun_entity_id="sun.sun",
+        temp_entity_id="sensor.outdoor_temp",
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={"cover.wohnzimmer"},
+        current_position=0,
+    )
+
+    assert decision is None
+
+

@@ -11,6 +11,12 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.13
+
+- Fixed lux restore regression after evening close: `R-LUX-002` is no longer triggered when covers are at close position and not actually in shading position.
+- Kept lux gating behavior range-based for azimuth/elevation while improving sun-angle extraction from nested sun payload attributes.
+- Added regression coverage for the evening-close/lux-restore edge case.
+
 ### v0.6.12
 
 - Fixed astro parsing compatibility so both `next_dawn`/`next_dusk` and legacy `next_rising`/`next_setting` snapshot keys are accepted.

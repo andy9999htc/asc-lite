@@ -48,7 +48,7 @@ def evaluate_lux_shading(
         return None
 
     shading_target = int(shading_position)
-    is_currently_shaded = current_position is not None and current_position <= shading_target
+    is_currently_shaded = current_position is not None and shading_target -2 <= current_position <= shading_target + 2
 
     lux_value = _read_float(snapshot, lux_entity_id)
     if lux_value is None:
@@ -58,6 +58,7 @@ def evaluate_lux_shading(
     sun_context = snapshot.get(sun_entity_id)
     azimuth = _read_numeric_from_mapping(sun_context, "azimuth")
     elevation = _read_numeric_from_mapping(sun_context, "elevation")
+
     if azimuth is not None and not (azimuth_min <= azimuth <= azimuth_max):
         if is_currently_shaded:
             return _build_shading_out_decision(
@@ -194,7 +195,13 @@ def _read_numeric_from_mapping(value: Any, key: str) -> float | None:
     if value is None:
         return None
     if isinstance(value, Mapping):
-        return _to_float(value.get(key))
+        direct_value = _to_float(value.get(key))
+        if direct_value is not None:
+            return direct_value
+        attributes = value.get("attributes")
+        if isinstance(attributes, Mapping):
+            return _to_float(attributes.get(key))
+        return None
     return _to_float(value)
 
 
