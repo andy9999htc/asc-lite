@@ -472,6 +472,8 @@ def _read_state_value(hass: HomeAssistant, entity_id: str) -> Any:
             "state": state.state,
             "elevation": state.attributes.get("elevation"),
             "azimuth": state.attributes.get("azimuth"),
+            "next_dawn": state.attributes.get("next_dawn"),
+            "next_dusk": state.attributes.get("next_dusk"),
             "next_rising": state.attributes.get("next_rising"),
             "next_setting": state.attributes.get("next_setting"),
         }

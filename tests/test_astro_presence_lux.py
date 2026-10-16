@@ -426,3 +426,117 @@ def test_lux_shading_out_returns_cover_to_day_position() -> None:
     assert decision.rule_id == "R-LUX-002"
     assert decision.reason_code == "LUX_SHADING_OUT"
     assert decision.target_position == 80
+
+
+def test_lux_shading_out_when_azimuth_elevation_or_temp_leaves_valid_range() -> None:
+    azimuth_out = evaluate_lux_shading(
+        "cover.wohnzimmer",
+        StateSnapshot(
+            {
+                "sensor.lux_wz": 900,
+                "sun.sun": {"azimuth": 40, "elevation": 28},
+                "sensor.outdoor_temp": 22,
+            }
+        ),
+        lux_entity_id="sensor.lux_wz",
+        sun_entity_id="sun.sun",
+        temp_entity_id="sensor.outdoor_temp",
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={"cover.wohnzimmer"},
+        current_position=35,
+    )
+    elevation_out = evaluate_lux_shading(
+        "cover.wohnzimmer",
+        StateSnapshot(
+            {
+                "sensor.lux_wz": 900,
+                "sun.sun": {"azimuth": 140, "elevation": -2},
+                "sensor.outdoor_temp": 22,
+            }
+        ),
+        lux_entity_id="sensor.lux_wz",
+        sun_entity_id="sun.sun",
+        temp_entity_id="sensor.outdoor_temp",
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={"cover.wohnzimmer"},
+        current_position=35,
+    )
+    temp_out = evaluate_lux_shading(
+        "cover.wohnzimmer",
+        StateSnapshot(
+            {
+                "sensor.lux_wz": 900,
+                "sun.sun": {"azimuth": 140, "elevation": 28},
+                "sensor.outdoor_temp": 10,
+            }
+        ),
+        lux_entity_id="sensor.lux_wz",
+        sun_entity_id="sun.sun",
+        temp_entity_id="sensor.outdoor_temp",
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={"cover.wohnzimmer"},
+        current_position=35,
+    )
+
+    assert azimuth_out is not None
+    assert azimuth_out.rule_id == "R-LUX-002"
+    assert azimuth_out.target_position == 80
+    assert elevation_out is not None
+    assert elevation_out.rule_id == "R-LUX-002"
+    assert elevation_out.target_position == 80
+    assert temp_out is not None
+    assert temp_out.rule_id == "R-LUX-002"
+    assert temp_out.target_position == 80
+
+
+def test_lux_shading_does_not_restore_when_not_currently_shaded() -> None:
+    decision = evaluate_lux_shading(
+        "cover.wohnzimmer",
+        StateSnapshot(
+            {
+                "sensor.lux_wz": 900,
+                "sun.sun": {"azimuth": 40, "elevation": 28},
+                "sensor.outdoor_temp": 22,
+            }
+        ),
+        lux_entity_id="sensor.lux_wz",
+        sun_entity_id="sun.sun",
+        temp_entity_id="sensor.outdoor_temp",
+        azimuth_min=90,
+        azimuth_max=180,
+        elevation_min=0,
+        elevation_max=65,
+        min_temp_c=18,
+        enter_lux=400,
+        exit_lux=300,
+        shading_position=35,
+        restore_position=80,
+        non_terrace_cover_ids={"cover.wohnzimmer"},
+        current_position=80,
+    )
+
+    assert decision is None

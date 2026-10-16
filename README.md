@@ -11,6 +11,12 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.12
+
+- Fixed astro parsing compatibility so both `next_dawn`/`next_dusk` and legacy `next_rising`/`next_setting` snapshot keys are accepted.
+- Updated sun snapshot payload mapping to expose both dawn/dusk and rising/setting attributes for stable runtime/test behavior.
+- Fixed lux shading restore behavior: covers now trigger `R-LUX-002` not only on `lux_exit`, but also when azimuth/elevation/temperature leave the configured shading window after a prior shading-in.
+
 ### v0.6.11
 
 - Updated astro time parsing to use `sun` attributes `next_dawn` and `next_dusk` for morning/evening rule windows.
@@ -133,8 +139,9 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 ## Rule behavior (current)
 
 - Morning open (`R-ASTRO-002`) and evening close (`R-ASTRO-001`) are time-window based must-rules.
-- Morning open is allowed from `sun.next_rising` until `sun.next_rising + 10 minutes`.
-- Evening close is allowed from `sun.next_setting` until `sun.next_setting + 10 minutes`.
+- Morning open is allowed from `sun.next_dawn` until `sun.next_dawn + 10 minutes`.
+- Evening close is allowed from `sun.next_dusk` until `sun.next_dusk + 10 minutes`.
+- Runtime remains backward-compatible with `sun.next_rising` / `sun.next_setting` snapshots.
 - Astro open/close decisions are executed once per day per cover and per astro rule in runtime.
 - The only functional blockers are:
   - Presence blocker for configured kids shutters in morning open (`presence=home` blocks `R-ASTRO-002`).

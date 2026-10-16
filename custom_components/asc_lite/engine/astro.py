@@ -186,40 +186,41 @@ def _is_within_evening_window(
 
 
 def _read_next_rising(snapshot: StateSnapshot, sun_entity_id: str) -> datetime | None:
-    """Read sun next_rising timestamp from snapshot sun payload."""
+    """Read sunrise anchor timestamp from snapshot sun payload."""
     value = snapshot.get(sun_entity_id)
     if not isinstance(value, Mapping):
         return None
 
-    raw_next_rising = value.get("next_dawn")
-    if raw_next_rising is None:
-        return None
-    if isinstance(raw_next_rising, datetime):
-        return raw_next_rising
-    if isinstance(raw_next_rising, str):
-        candidate = raw_next_rising.strip()
-        if not candidate:
-            return None
-        try:
-            return datetime.fromisoformat(candidate.replace("Z", "+00:00"))
-        except ValueError:
-            return None
-    return None
+    return _read_sun_timestamp(value, "next_dawn", "next_rising")
 
 
 def _read_next_setting(snapshot: StateSnapshot, sun_entity_id: str) -> datetime | None:
-    """Read sun next_setting timestamp from snapshot sun payload."""
+    """Read sunset anchor timestamp from snapshot sun payload."""
     value = snapshot.get(sun_entity_id)
     if not isinstance(value, Mapping):
         return None
 
-    raw_next_setting = value.get("next_dusk")
-    if raw_next_setting is None:
+    return _read_sun_timestamp(value, "next_dusk", "next_setting")
+
+
+def _read_sun_timestamp(value: Mapping[str, Any], *keys: str) -> datetime | None:
+    """Return first parseable datetime found under one of the provided keys."""
+    for key in keys:
+        raw_value = value.get(key)
+        parsed = _parse_timestamp(raw_value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _parse_timestamp(raw_value: Any) -> datetime | None:
+    """Parse datetime values from native datetime or ISO-formatted strings."""
+    if raw_value is None:
         return None
-    if isinstance(raw_next_setting, datetime):
-        return raw_next_setting
-    if isinstance(raw_next_setting, str):
-        candidate = raw_next_setting.strip()
+    if isinstance(raw_value, datetime):
+        return raw_value
+    if isinstance(raw_value, str):
+        candidate = raw_value.strip()
         if not candidate:
             return None
         try:
