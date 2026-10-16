@@ -11,6 +11,11 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.11
+
+- Updated astro time parsing to use `sun` attributes `next_dawn` and `next_dusk` for morning/evening rule windows.
+- Keeps sunrise/sunset based open/close evaluation aligned with the adjusted Home Assistant sun timestamp fields.
+
 ### v0.6.10
 
 - Enforced astro morning-open and evening-close as time-window must-rules independent of current cover position.

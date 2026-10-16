@@ -191,7 +191,7 @@ def _read_next_rising(snapshot: StateSnapshot, sun_entity_id: str) -> datetime |
     if not isinstance(value, Mapping):
         return None
 
-    raw_next_rising = value.get("next_rising")
+    raw_next_rising = value.get("next_dawn")
     if raw_next_rising is None:
         return None
     if isinstance(raw_next_rising, datetime):
@@ -213,7 +213,7 @@ def _read_next_setting(snapshot: StateSnapshot, sun_entity_id: str) -> datetime 
     if not isinstance(value, Mapping):
         return None
 
-    raw_next_setting = value.get("next_setting")
+    raw_next_setting = value.get("next_dusk")
     if raw_next_setting is None:
         return None
     if isinstance(raw_next_setting, datetime):
