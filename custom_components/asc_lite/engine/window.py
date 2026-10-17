@@ -36,11 +36,7 @@ def evaluate_window_protection(
         return None
 
     value = snapshot.get(terrace_window_entity_id)
-    is_open = _is_truthy(value)
-    if _is_contact_sensor(terrace_window_entity_id):
-        is_open = not is_open
-
-    if not is_open:
+    if not _is_truthy(value):
         _LOGGER.debug("ASC Lite window skipped: cover=%s terrace_window=%s", cover_id, value)
         return None
 
@@ -65,8 +61,3 @@ def _is_truthy(value: object) -> bool:
         lowered = value.strip().lower()
         return lowered in {"1", "true", "on", "open", "yes"}
     return bool(value)
-
-
-def _is_contact_sensor(entity_id: str) -> bool:
-    """Detect inverted contact sensors by their entity id suffix."""
-    return entity_id.lower().rsplit(".", 1)[-1].endswith("_contact")
