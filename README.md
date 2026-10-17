@@ -11,6 +11,15 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.15
+
+- Revert back latest changes in 0.6.14 
+
+### v0.6.14
+
+- Added automatic inversion for terrace window contact sensors whose entity id ends with `_contact`, so `contact: true` is treated as closed.
+- Added regression coverage for both inverted contact-sensor behavior and the existing open/closed window rule path.
+
 ### v0.6.13
 
 - Fixed lux restore regression after evening close: `R-LUX-002` is no longer triggered when covers are at close position and not actually in shading position.
