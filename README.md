@@ -5,11 +5,16 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![Open your Home Assistant instance and open a repository inside HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=andy9999htc&repository=asc-lite&category=integration)
 
-ASC-lite is a focused Home Assistant integration that implements the required subset of ASC behavior for this installation: astro open/close, per-shutter time windows, per-shutter shading thresholds, party handling, window protection, and manual block behavior.
+ASC-lite is a focused Home Assistant integration that implements the required subset of ASC behavior for this installation: astro open/close, per-shutter time windows, per-shutter shading thresholds, party handling, and manual block behavior.
 
 > **Disclaimer:** This is an unofficial community project. It is not endorsed by or affiliated with Home Assistant, FHEM, or any shutter hardware vendor.
 
 ## Changelog
+
+### v0.6.16
+
+- Removed the obsolete terrace window protection mode and all related config/runtime references.
+- Cleaned the config flow, runtime model, engine exports, and tests so the project no longer exposes the deprecated window-protection feature.
 
 ### v0.6.15
 
@@ -70,9 +75,9 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ### v0.6.5
 
-- Added per-cover position settings in config JSON: `close_position`, `shading_position`, and `ventilate_position`.
+- Added per-cover position settings in config JSON: `close_position` and `shading_position`.
 - Kept `open_position` fixed at 100 by design.
-- Wired runtime evaluation to use per-cover target positions for astro close, lux shading in, and terrace window ventilation.
+- Wired runtime evaluation to use per-cover target positions for astro close and lux shading in.
 - Added explicit unit tests for per-cover position defaults, per-cover overrides, and 0..100 range validation.
 
 ### v0.6.0
@@ -160,7 +165,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 - Astro open/close decisions are executed once per day per cover and per astro rule in runtime.
 - The only functional blockers are:
   - Presence blocker for configured kids shutters in morning open (`presence=home` blocks `R-ASTRO-002`).
-  - Party/window precedence behavior for terrace shutters (handled by `R-WIN-001` and `R-PARTY-001` before astro).
+  - Party precedence behavior for terrace shutters (handled by `R-PARTY-001` before astro).
 
 Detailed rule matrix and precedence are documented in `ASC_LITE_DECISION_TABLE.md`.
 
@@ -249,7 +254,6 @@ Each cover object supports:
 - scale (10 or 100)
 - close_position (0..100, default 0)
 - shading_position (0..100, default 35)
-- ventilate_position (0..100, default 35)
 - azimuth_min
 - azimuth_max
 - elevation_min
@@ -269,7 +273,6 @@ Example:
     "scale": 100,
     "close_position": 0,
     "shading_position": 35,
-    "ventilate_position": 35,
     "azimuth_min": 120,
     "azimuth_max": 260,
     "elevation_min": 10,
@@ -285,7 +288,6 @@ Example:
     "scale": 10,
     "close_position": 0,
     "shading_position": 40,
-    "ventilate_position": 35,
     "azimuth_min": 110,
     "azimuth_max": 255,
     "elevation_min": 8,
@@ -353,7 +355,6 @@ Supported environment variables:
 - ASC_PRESENCE_ENTITY_ID
 - ASC_AUTO_ENABLED_ENTITY_ID
 - ASC_PARTY_MODE_ENTITY_ID
-- ASC_TERRACE_WINDOW_ENTITY_ID
 - ASC_OUTDOOR_TEMP_ENTITY_ID
 - ASC_LUX_WZ_ENTITY_ID
 - ASC_LUX_EZ_ENTITY_ID

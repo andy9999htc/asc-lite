@@ -6,8 +6,6 @@ can be tested in isolation and combined by the future rule engine.
 
 from __future__ import annotations
 
-WINDOW_PROTECTION_RULE_ID = "R-WIN-001"
-WINDOW_RESUME_RULE_ID = "R-WIN-002"
 PARTY_SUPPRESS_RULE_ID = "R-PARTY-001"
 PARTY_RESUME_RULE_ID = "R-PARTY-002"
 PRESENCE_AWAY_CLOSE_RULE_ID = "R-PRES-001"
@@ -28,6 +26,4 @@ __all__ = [
     "PRESENCE_AWAY_CLOSE_RULE_ID",
     "PRESENCE_AWAY_FORCED_OPEN_RULE_ID",
     "PRESENCE_HOME_OPEN_RULE_ID",
-    "WINDOW_PROTECTION_RULE_ID",
-    "WINDOW_RESUME_RULE_ID",
 ]

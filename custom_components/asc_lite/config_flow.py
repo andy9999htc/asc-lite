@@ -32,7 +32,6 @@ from .const import (
     CONF_PARTY_MODE_ENTITY_ID,
     CONF_PRESENCE_ENTITY_ID,
     CONF_SUN_ENTITY_ID,
-    CONF_TERRACE_WINDOW_ENTITY_ID,
     DEFAULT_INVERT_POSITIONS_GLOBAL,
     DEFAULT_MANUAL_BLOCK_SECONDS,
     DEFAULT_NAME,
@@ -50,7 +49,6 @@ REQUIRED_ENTITY_KEYS: tuple[str, ...] = (
     CONF_PARTY_MODE_ENTITY_ID,
 )
 OPTIONAL_ENTITY_KEYS: tuple[str, ...] = (
-    CONF_TERRACE_WINDOW_ENTITY_ID,
     CONF_OUTDOOR_TEMP_ENTITY_ID,
     CONF_LUX_WZ_ENTITY_ID,
     CONF_LUX_EZ_ENTITY_ID,
@@ -185,10 +183,6 @@ def _global_schema(user_input: Mapping[str, Any] | None) -> vol.Schema:
                 default=values.get(CONF_PARTY_MODE_ENTITY_ID, ""),
             ): str,
             vol.Optional(
-                CONF_TERRACE_WINDOW_ENTITY_ID,
-                default=values.get(CONF_TERRACE_WINDOW_ENTITY_ID, ""),
-            ): str,
-            vol.Optional(
                 CONF_OUTDOOR_TEMP_ENTITY_ID,
                 default=values.get(CONF_OUTDOOR_TEMP_ENTITY_ID, ""),
             ): str,
@@ -254,10 +248,6 @@ def _options_schema(
             vol.Required(
                 CONF_PARTY_MODE_ENTITY_ID,
                 default=values.get(CONF_PARTY_MODE_ENTITY_ID, ""),
-            ): str,
-            vol.Optional(
-                CONF_TERRACE_WINDOW_ENTITY_ID,
-                default=values.get(CONF_TERRACE_WINDOW_ENTITY_ID, ""),
             ): str,
             vol.Optional(
                 CONF_OUTDOOR_TEMP_ENTITY_ID,
@@ -367,7 +357,6 @@ def _default_covers_json() -> str:
                 "scale": 100,
                 "close_position": 0,
                 "shading_position": 35,
-                "ventilate_position": 35,
                 "azimuth_min": 120,
                 "azimuth_max": 260,
                 "elevation_min": 10,

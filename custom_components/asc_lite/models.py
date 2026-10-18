@@ -35,13 +35,10 @@ from .const import (
     CONF_PRESENCE_ENTITY_ID,
     CONF_SHADING_POSITION,
     CONF_SUN_ENTITY_ID,
-    CONF_TERRACE_WINDOW_ENTITY_ID,
-    CONF_VENTILATE_POSITION,
     DEFAULT_CLOSE_POSITION,
     DEFAULT_INVERT_POSITIONS_GLOBAL,
     DEFAULT_MANUAL_BLOCK_SECONDS,
     DEFAULT_SHADING_POSITION,
-    DEFAULT_VENTILATE_POSITION,
 )
 
 
@@ -102,7 +99,6 @@ class CoverConfig:
     shading: ShadingConfig
     close_position: int = DEFAULT_CLOSE_POSITION
     shading_position: int = DEFAULT_SHADING_POSITION
-    ventilate_position: int = DEFAULT_VENTILATE_POSITION
 
     def __post_init__(self) -> None:
         if not self.entity_id:
@@ -113,7 +109,6 @@ class CoverConfig:
             )
         _ensure_pct_range(self.close_position, "close_position")
         _ensure_pct_range(self.shading_position, "shading_position")
-        _ensure_pct_range(self.ventilate_position, "ventilate_position")
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,7 +120,6 @@ class GlobalConfig:
     presence_entity_id: str
     auto_enabled_entity_id: str
     party_mode_entity_id: str
-    terrace_window_entity_id: str | None
     outdoor_temp_entity_id: str | None
     lux_wz_entity_id: str | None
     lux_ez_entity_id: str | None
@@ -180,13 +174,6 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
             f"covers[{index}]",
             default=DEFAULT_SHADING_POSITION,
         )
-        ventilate_position = _optional_int_with_default(
-            item,
-            CONF_VENTILATE_POSITION,
-            f"covers[{index}]",
-            default=DEFAULT_VENTILATE_POSITION,
-        )
-
         thresholds = ThresholdConfig(
             min_temp_c=_optional_float(item.get(CONF_MIN_TEMP_C)),
             lux_enter=_require_float(item, CONF_LUX_ENTER, f"covers[{index}]"),
@@ -209,7 +196,6 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
                 scale=scale,
                 close_position=close_position,
                 shading_position=shading_position,
-                ventilate_position=ventilate_position,
                 shading=shading,
             )
         )
@@ -222,7 +208,6 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
             merged, CONF_AUTO_ENABLED_ENTITY_ID, "global"
         ),
         party_mode_entity_id=_require_string(merged, CONF_PARTY_MODE_ENTITY_ID, "global"),
-        terrace_window_entity_id=_optional_string(merged.get(CONF_TERRACE_WINDOW_ENTITY_ID)),
         outdoor_temp_entity_id=_optional_string(merged.get(CONF_OUTDOOR_TEMP_ENTITY_ID)),
         lux_wz_entity_id=_optional_string(merged.get(CONF_LUX_WZ_ENTITY_ID)),
         lux_ez_entity_id=_optional_string(merged.get(CONF_LUX_EZ_ENTITY_ID)),

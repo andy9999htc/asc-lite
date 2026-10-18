@@ -15,7 +15,6 @@ CONF_SUN_ENTITY_ID = "sun_entity_id"
 CONF_PRESENCE_ENTITY_ID = "presence_entity_id"
 CONF_AUTO_ENABLED_ENTITY_ID = "auto_enabled_entity_id"
 CONF_PARTY_MODE_ENTITY_ID = "party_mode_entity_id"
-CONF_TERRACE_WINDOW_ENTITY_ID = "terrace_window_entity_id"
 CONF_OUTDOOR_TEMP_ENTITY_ID = "outdoor_temp_entity_id"
 CONF_LUX_WZ_ENTITY_ID = "lux_wz_entity_id"
 CONF_LUX_EZ_ENTITY_ID = "lux_ez_entity_id"
@@ -30,7 +29,6 @@ CONF_COVER_NAME = "name"
 CONF_COVER_SCALE = "scale"
 CONF_CLOSE_POSITION = "close_position"
 CONF_SHADING_POSITION = "shading_position"
-CONF_VENTILATE_POSITION = "ventilate_position"
 
 CONF_AZIMUTH_MIN = "azimuth_min"
 CONF_AZIMUTH_MAX = "azimuth_max"
@@ -49,7 +47,6 @@ DEFAULT_INVERT_POSITIONS_GLOBAL = False
 DEFAULT_OPEN_POSITION = 100
 DEFAULT_CLOSE_POSITION = 0
 DEFAULT_SHADING_POSITION = 35
-DEFAULT_VENTILATE_POSITION = 35
 
 # Supported native cover scales for MVP.
 ALLOWED_COVER_SCALES: set[int] = {10, 100}

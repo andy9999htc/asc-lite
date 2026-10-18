@@ -25,7 +25,6 @@ This contract defines all Home Assistant entities required for ASC-lite MVP, inc
 | `outdoor_temp_entity_id` | sensor | float (degC) | should | Disable temperature gate for shading. |
 | `lux_wz_entity_id` | sensor | float lux | should | Disable lux-driven shading for WZ group. |
 | `lux_ez_entity_id` | sensor | float lux | should | Disable lux-driven shading for EZ group. |
-| `terrace_window_entity_id` | binary_sensor | `on`/`off` | yes for terrace behavior | Disable ventilate-inhibit rule for terrace and log warning. |
 | `auto_enabled_entity_id` | input_boolean | `on`/`off` | yes | Default `on`. |
 | `party_mode_entity_id` | input_boolean | `on`/`off` | yes | Default `off`. |
 | `sun.sun` | sun | HA sun states/attributes | yes | Disable astro moves and log `astro_source_missing`. |

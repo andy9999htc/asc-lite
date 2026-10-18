@@ -7,27 +7,25 @@ Status: Runtime-aligned (v0.6.10+)
 Use this fixed order for every evaluation cycle:
 
 1. Safety (future v1.1+)
-2. Window/Ventilate protection
-3. Party mode suppression
-4. Manual block suppression
-5. Presence gating (kids forced open when away only; blocks astro morning open when home)
-6. Astro open/close
-7. Lux shading transitions
-8. Fallback behavior
+2. Party mode suppression
+3. Manual block suppression
+4. Presence gating (kids forced open when away only; blocks astro morning open when home)
+5. Astro open/close
+6. Lux shading transitions
+7. Fallback behavior
 
 ## 2) Rule Matrix
 
 | Rule ID | Trigger | Preconditions | Blockers | Action | Reason code | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| R-WIN-001 | terrace window is truthy (`on/open/true`) | cover is terrace cover | none | Set terrace to configured ventilate position | `WINDOW_OPEN` | 2 |
-| R-PARTY-001 | party mode is truthy (`on/open/true`) | cover is terrace cover | none | Hold terrace at current position (suppresses following terrace rules in that cycle) | `PARTY_MODE` | 3 |
-| R-MAN-001 | Cover position change | Internal command flag is off | none | Start manual block timer for this shutter | `manual_override_detected` | 4 |
-| R-MAN-002 | Manual block active | decision in `{R-LUX-001, R-LUX-002, R-ASTRO-002}` | none | Skip dispatch for this shutter | `MANUAL_BLOCK_ACTIVE` | 4 |
-| R-PRES-002 | presence in `{away, off, absent}` | shutter in `{amelie_fenster, amelie_tuer, schlafzimmer_fenster, schlafzimmer_tuer}` | manual block (dispatch-time) | Open even if normal morning open is not configured | `PRESENCE_AWAY_FORCED_OPEN` | 5 |
-| R-ASTRO-001 | current time in sunset window | auto enabled | terrace blockers by precedence (`R-WIN-001`, `R-PARTY-001`), once/day runtime guard | Move to configured close position | `ASTRO_EVENING_CLOSE` | 6 |
-| R-ASTRO-002 | current time in sunrise window | auto enabled | presence=home for kids, manual block (dispatch-time), terrace blockers by precedence (`R-WIN-001`, `R-PARTY-001`), once/day runtime guard | Move to open position (100) | `ASTRO_MORNING_OPEN` | 6 |
-| R-LUX-001 | lux >= enter threshold | sun in azimuth/elevation range, temp gate pass, shutter is not terrace | manual block (dispatch-time) | Move to shading position | `LUX_SHADING_IN` | 7 |
-| R-LUX-002 | lux <= exit threshold while currently shaded | shutter is not terrace | manual block (dispatch-time) | Return to day/open profile | `LUX_SHADING_OUT` | 7 |
+| R-PARTY-001 | party mode is truthy (`on/open/true`) | cover is terrace cover | none | Hold terrace at current position (suppresses following terrace rules in that cycle) | `PARTY_MODE` | 2 |
+| R-MAN-001 | Cover position change | Internal command flag is off | none | Start manual block timer for this shutter | `manual_override_detected` | 3 |
+| R-MAN-002 | Manual block active | decision in `{R-LUX-001, R-LUX-002, R-ASTRO-002}` | none | Skip dispatch for this shutter | `MANUAL_BLOCK_ACTIVE` | 3 |
+| R-PRES-002 | presence in `{away, off, absent}` | shutter in `{amelie_fenster, amelie_tuer, schlafzimmer_fenster, schlafzimmer_tuer}` | manual block (dispatch-time) | Open even if normal morning open is not configured | `PRESENCE_AWAY_FORCED_OPEN` | 4 |
+| R-ASTRO-001 | current time in sunset window | auto enabled | terrace blockers by precedence (`R-PARTY-001`), once/day runtime guard | Move to configured close position | `ASTRO_EVENING_CLOSE` | 5 |
+| R-ASTRO-002 | current time in sunrise window | auto enabled | presence=home for kids, manual block (dispatch-time), terrace blockers by precedence (`R-PARTY-001`), once/day runtime guard | Move to open position (100) | `ASTRO_MORNING_OPEN` | 5 |
+| R-LUX-001 | lux >= enter threshold | sun in azimuth/elevation range, temp gate pass, shutter is not terrace | manual block (dispatch-time) | Move to shading position | `LUX_SHADING_IN` | 6 |
+| R-LUX-002 | lux <= exit threshold while currently shaded | shutter is not terrace | manual block (dispatch-time) | Return to day/open profile | `LUX_SHADING_OUT` | 6 |
 
 ## 3) Time Window Guard
 
@@ -72,7 +70,7 @@ Note:
 | Party mode vs non-terrace rules | No suppression |
 | Manual block vs shading/comfort actions | Manual block suppresses shading/comfort actions only |
 | Manual block vs terrace evening down (`R-ASTRO-001`) | Manual block does not suppress evening-down |
-| Terrace window open vs evening close | Terrace window rule (ventilate)
+| Terrace window open vs evening close | No special terrace window rule remains; standard evening close behavior applies.
 | Presence action vs lux action in same cycle | Presence action first, lux re-evaluates next cycle |
 
 ## 6) Decision Logging Contract

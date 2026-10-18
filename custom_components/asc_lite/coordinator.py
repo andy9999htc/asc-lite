@@ -34,7 +34,6 @@ from .engine.presence import evaluate_presence_rule
 from .engine.shading import evaluate_lux_shading
 from .engine.state import StateSnapshot
 from .engine.types import Decision
-from .engine.window import evaluate_window_protection
 from .logging import log_decision
 from .models import CoverConfig, GlobalConfig
 
@@ -302,17 +301,6 @@ class ASCLiteCoordinator:
             if _is_terrace_cover(item.entity_id, item.name)
         }
 
-        if self.config.terrace_window_entity_id:
-            window_decision = evaluate_window_protection(
-                cover_id,
-                snapshot,
-                terrace_window_entity_id=self.config.terrace_window_entity_id,
-                ventilate_position=cover.ventilate_position,
-                terrace_cover_ids=terrace_cover_ids,
-            )
-            if window_decision is not None:
-                return window_decision
-
         party_decision = evaluate_party_rule(
             cover_id,
             snapshot,
@@ -398,11 +386,6 @@ class ASCLiteCoordinator:
         raw[self.config.auto_enabled_entity_id] = _read_state_value(self.hass, self.config.auto_enabled_entity_id)
         raw[self.config.party_mode_entity_id] = _read_state_value(self.hass, self.config.party_mode_entity_id)
 
-        if self.config.terrace_window_entity_id:
-            raw[self.config.terrace_window_entity_id] = _read_state_value(
-                self.hass,
-                self.config.terrace_window_entity_id,
-            )
         if self.config.outdoor_temp_entity_id:
             raw[self.config.outdoor_temp_entity_id] = _read_state_value(
                 self.hass,

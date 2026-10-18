@@ -29,7 +29,6 @@ def valid_entry() -> FakeEntry:
             "presence_entity_id": "binary_sensor.resident_home",
             "auto_enabled_entity_id": "input_boolean.asc_auto_enabled",
             "party_mode_entity_id": "input_boolean.asc_party",
-            "terrace_window_entity_id": "binary_sensor.window_terrace",
             "outdoor_temp_entity_id": "sensor.outdoor_temp",
             "lux_wz_entity_id": "sensor.lux_wz",
             "lux_ez_entity_id": "sensor.lux_ez",
@@ -68,19 +67,16 @@ def test_cover_position_defaults_applied_when_omitted(valid_entry: FakeEntry) ->
     cover = cfg.covers[0]
     assert cover.close_position == 0
     assert cover.shading_position == 35
-    assert cover.ventilate_position == 35
 
 
 def test_cover_position_overrides_applied_from_config(valid_entry: FakeEntry) -> None:
     valid_entry.data["covers"][0]["close_position"] = 15
     valid_entry.data["covers"][0]["shading_position"] = 42
-    valid_entry.data["covers"][0]["ventilate_position"] = 28
 
     cfg = build_runtime_config(valid_entry)
     cover = cfg.covers[0]
     assert cover.close_position == 15
     assert cover.shading_position == 42
-    assert cover.ventilate_position == 28
 
 
 def test_missing_required_binding_rejected(valid_entry: FakeEntry) -> None:
@@ -116,8 +112,6 @@ def test_hysteresis_constraints_rejected(valid_entry: FakeEntry) -> None:
         ("close_position", 101),
         ("shading_position", -1),
         ("shading_position", 101),
-        ("ventilate_position", -1),
-        ("ventilate_position", 101),
     ],
 )
 def test_cover_position_range_validation_rejected(

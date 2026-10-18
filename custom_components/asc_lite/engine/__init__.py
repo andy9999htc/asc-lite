@@ -13,7 +13,6 @@ from .presence import evaluate_presence_rule
 from .priority import Decision, PriorityRule, evaluate_rules
 from .shading import evaluate_lux_shading, evaluate_lux_shading_rule
 from .state import StateSnapshot, build_state_snapshot
-from .window import evaluate_window_protection
 
 __all__ = [
     "Decision",
@@ -30,5 +29,4 @@ __all__ = [
     "evaluate_party_rule",
     "evaluate_presence_rule",
     "evaluate_rules",
-    "evaluate_window_protection",
 ]

@@ -73,7 +73,6 @@ def _config() -> GlobalConfig:
         presence_entity_id="input_boolean.asc_presence_dummy",
         auto_enabled_entity_id="input_boolean.asc_auto_enabled",
         party_mode_entity_id="input_boolean.asc_party_mode",
-        terrace_window_entity_id="binary_sensor.terrace_window",
         outdoor_temp_entity_id="sensor.outdoor_temp",
         lux_wz_entity_id="sensor.lux_wz",
         lux_ez_entity_id="sensor.lux_ez",

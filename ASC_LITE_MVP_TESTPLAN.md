@@ -50,7 +50,6 @@ Secondary verification shutters (after pilot):
 | T-008 | Manual block enforce | Trigger auto shading/comfort action while manual block active | No movement for shading/comfort action; reason `manual_block_active` |
 | T-008A | Manual block does not suppress evening down | Trigger evening-down action for any shutter while manual block active | Shutter still executes evening down if time window and safety rules allow; reason remains `astro_evening_close` or equivalent rule |
 | T-009 | Manual block expiry | Wait timer expiry then trigger auto | Auto action executes again |
-| T-010 | Terrace window protection | Set terrace window sensor to open near evening close | Terrace moves/stays at ventilate pos; reason `terrace_window_open_ventilate` |
 | T-011 | Terrace resume | Close terrace window sensor | Normal rule processing resumes |
 | T-012 | Lux shading in | Raise lux above entry threshold with valid azimuth/elevation | Move to shading pos on non-terrace shutters only; reason `lux_shading_in` |
 | T-013 | Lux shading out | Drop lux below exit threshold | Return from shading; reason `lux_shading_out` |

@@ -27,7 +27,6 @@ from custom_components.asc_lite.engine.presence import evaluate_presence_rule
 from custom_components.asc_lite.engine.priority import Decision, PriorityRule, evaluate_rules
 from custom_components.asc_lite.engine.shading import evaluate_lux_shading
 from custom_components.asc_lite.engine.state import build_state_snapshot
-from custom_components.asc_lite.engine.window import evaluate_window_protection
 from custom_components.asc_lite.logging import log_decision
 from custom_components.asc_lite.coordinator import ASCLiteCoordinator
 from custom_components.asc_lite.models import ConfigValidationError, build_runtime_config
@@ -157,7 +156,6 @@ def build_entry_from_env() -> FakeEntry:
         "party_mode_entity_id": os.getenv(
             "ASC_PARTY_MODE_ENTITY_ID", "input_boolean.asc_party_mode"
         ),
-        "terrace_window_entity_id": os.getenv("ASC_TERRACE_WINDOW_ENTITY_ID", ""),
         "outdoor_temp_entity_id": os.getenv("ASC_OUTDOOR_TEMP_ENTITY_ID", ""),
         "lux_wz_entity_id": os.getenv("ASC_LUX_WZ_ENTITY_ID", ""),
         "lux_ez_entity_id": os.getenv("ASC_LUX_EZ_ENTITY_ID", ""),
@@ -204,11 +202,9 @@ def run_engine_samples(cfg: Any) -> None:
         {
             cfg.sun_entity_id: "night",
             cfg.presence_entity_id: "home",
-            cfg.terrace_window_entity_id or "binary_sensor.terrace_window": False,
             cfg.covers[0].entity_id: 0,
         },
         defaults={
-            cfg.terrace_window_entity_id or "binary_sensor.terrace_window": False,
             cfg.covers[0].entity_id: 0,
         },
     )
@@ -283,25 +279,9 @@ def run_m2_samples(cfg: Any) -> None:
     )
 
 
-def run_m3_window_sample(cfg: Any) -> None:
-    """Run the M3 terrace safety rule dry-runs."""
+def run_m3_party_sample(cfg: Any) -> None:
+    """Run the terrace party-rule dry-run without the removed window protection rule."""
     terrace_cover_id = cfg.covers[0].entity_id
-    terrace_window_id = cfg.terrace_window_entity_id or "binary_sensor.terrace_window"
-    snapshot = build_state_snapshot({terrace_window_id: True}, defaults={terrace_window_id: False})
-
-    decision = evaluate_window_protection(
-        terrace_cover_id,
-        snapshot,
-        terrace_window_entity_id=terrace_window_id,
-        ventilate_position=35,
-        terrace_cover_ids={terrace_cover_id},
-    )
-
-    print("\nM3 window-protection dry-run:")
-    print(f"- terrace window open: {snapshot.get(terrace_window_id)}")
-    print(f"- selected rule: {decision.rule_id if decision else 'none'}")
-    print(f"- target position: {decision.target_position if decision else 'none'}")
-
     party_snapshot = build_state_snapshot(
         {"input_boolean.asc_party_mode": True, terrace_cover_id: 80},
         defaults={"input_boolean.asc_party_mode": False, terrace_cover_id: 0},
@@ -445,8 +425,6 @@ def run_m5_runtime_wiring_sample(cfg: Any) -> None:
         cfg.sun_entity_id: FakeState("above_horizon", {"elevation": -7.0, "azimuth": 140.0}),
     }
 
-    if cfg.terrace_window_entity_id:
-        state_map[cfg.terrace_window_entity_id] = FakeState("off", {})
     if cfg.outdoor_temp_entity_id:
         state_map[cfg.outdoor_temp_entity_id] = FakeState("22", {})
     if cfg.lux_wz_entity_id:
@@ -542,7 +520,7 @@ def main() -> int:
     run_position_samples(cfg)
     run_engine_samples(cfg)
     run_m2_samples(cfg)
-    run_m3_window_sample(cfg)
+    run_m3_party_sample(cfg)
     run_m3_astro_presence_lux_sample(cfg)
     run_m5_runtime_wiring_sample(cfg)
     run_m5_diagnostics_projection_sample(cfg)

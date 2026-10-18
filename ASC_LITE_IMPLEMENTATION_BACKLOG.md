@@ -206,17 +206,16 @@ Hinweis zum aktuellen Stand:
 
 ## M3 - MVP Rules
 
-### B-010 Implement terrace window protection
-- Status: [x] umgesetzt
+### B-010 Removed: terrace window protection
+- Status: [x] entfernt
 - Priority: P0
 - Files:
   - custom_components/asc_lite/engine/window.py
   - custom_components/asc_lite/engine/rules.py
 - Scope:
-  - If terrace window open: terrace -> ventilate position
-  - Resume normal processing when closed
+  - Removed the window-protection rule entirely from runtime and config flow.
 - DoD:
-  - Rule IDs align with decision table (R-WIN-001/002)
+  - No active terrace-window safety rule remains in project logic
 
 ### B-011 Implement party rule (terrace evening down only)
 - Status: [x] umgesetzt

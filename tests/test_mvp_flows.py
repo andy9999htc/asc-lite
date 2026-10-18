@@ -15,7 +15,6 @@ from custom_components.asc_lite.engine.position import denormalize_pct_to_native
 from custom_components.asc_lite.engine.presence import evaluate_presence_rule
 from custom_components.asc_lite.engine.shading import evaluate_lux_shading
 from custom_components.asc_lite.engine.state import StateSnapshot
-from custom_components.asc_lite.engine.window import evaluate_window_protection
 
 
 def test_scale_and_inversion_acceptance_for_pilot_shutters() -> None:
@@ -31,24 +30,16 @@ def test_scale_and_inversion_acceptance_for_pilot_shutters() -> None:
     assert denormalize_pct_to_native(percent_position=93.0, scale=100, invert=True) == 7
 
 
-def test_terrace_window_and_party_rules_are_a_pilot_safe_sequence() -> None:
-    """Terrace safety window protection remains active even when party mode is enabled."""
+def test_party_rule_still_has_expected_pilot_behavior() -> None:
+    """Party mode still blocks the terrace cover as expected without the window rule."""
     terrace_cover = "cover.terrace"
     snapshot = StateSnapshot(
         {
-            "binary_sensor.terrace_window": True,
             "input_boolean.asc_party_mode": True,
             terrace_cover: 72,
         }
     )
 
-    window_decision = evaluate_window_protection(
-        terrace_cover,
-        snapshot,
-        terrace_window_entity_id="binary_sensor.terrace_window",
-        ventilate_position=35,
-        terrace_cover_ids={terrace_cover},
-    )
     party_decision = evaluate_party_rule(
         terrace_cover,
         snapshot,
@@ -56,9 +47,6 @@ def test_terrace_window_and_party_rules_are_a_pilot_safe_sequence() -> None:
         terrace_cover_ids={terrace_cover},
     )
 
-    assert window_decision is not None
-    assert window_decision.rule_id == "R-WIN-001"
-    assert response_rate(window_decision.target_position) == 35
     assert party_decision is not None
     assert party_decision.rule_id == "R-PARTY-001"
     assert response_rate(party_decision.target_position) == 72
