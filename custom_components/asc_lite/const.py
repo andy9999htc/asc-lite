@@ -29,6 +29,7 @@ CONF_COVER_NAME = "name"
 CONF_COVER_SCALE = "scale"
 CONF_CLOSE_POSITION = "close_position"
 CONF_SHADING_POSITION = "shading_position"
+CONF_MORNING_OPEN_WEEKEND_TIME = "morning_open_weekend_time"
 
 CONF_AZIMUTH_MIN = "azimuth_min"
 CONF_AZIMUTH_MAX = "azimuth_max"

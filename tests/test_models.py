@@ -39,6 +39,7 @@ def valid_entry() -> FakeEntry:
                     "cover_entity_id": "cover.rollladen_wohnzimmer",
                     "name": "Wohnzimmer",
                     "scale": 100,
+                    "morning_open_weekend_time": "08:00",
                     "azimuth_min": 120,
                     "azimuth_max": 260,
                     "elevation_min": 10,
@@ -60,13 +61,16 @@ def test_build_runtime_config_success(valid_entry: FakeEntry) -> None:
     assert cfg.invert_positions_global is False
     assert len(cfg.covers) == 1
     assert cfg.covers[0].scale == 100
+    assert cfg.covers[0].morning_open_weekend_time == "08:00"
 
 
 def test_cover_position_defaults_applied_when_omitted(valid_entry: FakeEntry) -> None:
+    valid_entry.data["covers"][0].pop("morning_open_weekend_time")
     cfg = build_runtime_config(valid_entry)
     cover = cfg.covers[0]
     assert cover.close_position == 0
     assert cover.shading_position == 35
+    assert cover.morning_open_weekend_time is None
 
 
 def test_cover_position_overrides_applied_from_config(valid_entry: FakeEntry) -> None:
@@ -77,6 +81,23 @@ def test_cover_position_overrides_applied_from_config(valid_entry: FakeEntry) ->
     cover = cfg.covers[0]
     assert cover.close_position == 15
     assert cover.shading_position == 42
+
+
+@pytest.mark.parametrize("value", ["08:00", "09:00"])
+def test_weekend_time_valid_values_accepted(valid_entry: FakeEntry, value: str) -> None:
+    valid_entry.data["covers"][0]["morning_open_weekend_time"] = value
+
+    cfg = build_runtime_config(valid_entry)
+
+    assert cfg.covers[0].morning_open_weekend_time == value
+
+
+@pytest.mark.parametrize("value", ["8:00", "24:00", "09:60", "abc"])
+def test_weekend_time_invalid_values_rejected(valid_entry: FakeEntry, value: str) -> None:
+    valid_entry.data["covers"][0]["morning_open_weekend_time"] = value
+
+    with pytest.raises(ConfigValidationError):
+        build_runtime_config(valid_entry)
 
 
 def test_missing_required_binding_rejected(valid_entry: FakeEntry) -> None:

@@ -55,11 +55,12 @@ class FakeEntry:
     entry_id: str
 
 
-def _cover(entity_id: str, name: str) -> CoverConfig:
+def _cover(entity_id: str, name: str, weekend_time: str | None = None) -> CoverConfig:
     return CoverConfig(
         entity_id=entity_id,
         name=name,
         scale=100,
+        morning_open_weekend_time=weekend_time,
         shading=ShadingConfig(
             azimuth_min=90,
             azimuth_max=180,
@@ -88,9 +89,9 @@ def _config() -> GlobalConfig:
         invert_positions_global=False,
         manual_block_seconds=3600,
         covers=(
-            _cover("cover.rollladen_terrasse", "Terrasse"),
-            _cover("cover.rollladen_wohnzimmer", "Wohnzimmer"),
-            _cover("cover.rollladen_amelie_fenster", "Amelie Fenster"),
+            _cover("cover.rollladen_terrasse", "Terrasse", "08:00"),
+            _cover("cover.rollladen_wohnzimmer", "Wohnzimmer", "08:00"),
+            _cover("cover.rollladen_amelie_fenster", "Amelie Fenster", "09:00"),
         ),
     )
 
@@ -267,3 +268,50 @@ def test_astro_rule_runs_only_once_per_day_per_cover(asyncio_run, monkeypatch) -
     assert second_call_count == first_call_count
     assert coordinator.last_decisions["cover.rollladen_wohnzimmer"].reason_code == "ASTRO_ALREADY_EXECUTED_TODAY"
     assert coordinator.last_decisions["cover.rollladen_wohnzimmer"].result == "suppressed"
+
+
+def test_coordinator_forwards_weekend_morning_time_per_cover(asyncio_run, monkeypatch) -> None:
+    captured: list[tuple[str, str | None]] = []
+
+    def _fake_astro(cover_id, snapshot, **kwargs):  # type: ignore[no-untyped-def]
+        _ = snapshot
+        captured.append((cover_id, kwargs.get("morning_open_weekend_time")))
+        return None
+
+    monkeypatch.setattr("custom_components.asc_lite.coordinator.evaluate_astro_rule", _fake_astro)
+
+    coordinator = ASCLiteCoordinator(
+        hass=FakeHass(
+            {
+                "input_boolean.asc_auto_enabled": FakeState("on", {}),
+                "input_boolean.asc_presence_dummy": FakeState("on", {}),
+                "input_boolean.asc_party_mode": FakeState("off", {}),
+                "sensor.outdoor_temp": FakeState("22", {}),
+                "sensor.lux_wz": FakeState("100", {}),
+                "sensor.lux_ez": FakeState("100", {}),
+                "sun.sun": FakeState(
+                    "above_horizon",
+                    {
+                        "elevation": 10,
+                        "azimuth": 150,
+                        "next_rising": "2026-10-14T07:44:00+02:00",
+                        "next_setting": "2026-10-14T18:36:00+02:00",
+                    },
+                ),
+                "cover.rollladen_terrasse": FakeState("open", {"current_position": 20}),
+                "cover.rollladen_wohnzimmer": FakeState("open", {"current_position": 20}),
+                "cover.rollladen_amelie_fenster": FakeState("open", {"current_position": 20}),
+            }
+        ),
+        entry=FakeEntry("entry-6"),
+        config=_config(),
+        logger=__import__("logging").getLogger("asc_lite.test"),
+    )
+
+    asyncio_run(coordinator.async_evaluate_once(trigger="unit"))
+
+    assert set(captured) == {
+        ("cover.rollladen_terrasse", "08:00"),
+        ("cover.rollladen_wohnzimmer", "08:00"),
+        ("cover.rollladen_amelie_fenster", "09:00"),
+    }

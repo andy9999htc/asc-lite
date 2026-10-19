@@ -362,6 +362,111 @@ def test_astro_morning_open_allows_within_sunrise_grace_window() -> None:
     assert decision.rule_id == "R-ASTRO-002"
 
 
+def test_astro_morning_open_uses_fixed_weekend_time_within_grace() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-11T17:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_position=100,
+        current_datetime=datetime(2026, 10, 11, 8, 5, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        morning_open_weekend_time="08:00",
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
+
+
+def test_astro_morning_open_weekend_fixed_time_skips_outside_grace() -> None:
+    snapshot = StateSnapshot({"sun.sun": {"next_setting": "2026-10-11T17:00:00+00:00"}})
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_position=100,
+        current_datetime=datetime(2026, 10, 11, 8, 11, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        morning_open_weekend_time="08:00",
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is None
+
+
+def test_astro_morning_open_weekday_ignores_weekend_fixed_time() -> None:
+    snapshot = StateSnapshot(
+        {"sun.sun": {"next_rising": "2026-10-13T07:44:00+00:00", "next_setting": "2026-10-13T17:00:00+00:00"}}
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.wohnzimmer",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_position=100,
+        current_datetime=datetime(2026, 10, 12, 8, 5, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        morning_open_weekend_time="08:00",
+        valid_cover_ids={"cover.wohnzimmer"},
+    )
+
+    assert decision is None
+
+
+def test_astro_morning_open_weekend_fixed_time_blocked_for_kids_when_presence_home() -> None:
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {"next_setting": "2026-10-11T17:00:00+00:00"},
+            "binary_sensor.resident_home": "home",
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.amelie_fenster",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_position=100,
+        current_datetime=datetime(2026, 10, 11, 9, 5, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        morning_open_weekend_time="09:00",
+        valid_cover_ids={"cover.amelie_fenster"},
+        presence_entity_id="binary_sensor.resident_home",
+        presence_home_values={"home", "on", "present"},
+        presence_blocks_morning_open_for={"cover.amelie_fenster"},
+    )
+
+    assert decision is None
+
+
+def test_astro_morning_open_weekend_fixed_time_allows_for_kids_when_presence_away() -> None:
+    snapshot = StateSnapshot(
+        {
+            "sun.sun": {"next_setting": "2026-10-11T17:00:00+00:00"},
+            "binary_sensor.resident_home": "away",
+        }
+    )
+
+    decision = evaluate_astro_rule(
+        "cover.amelie_fenster",
+        snapshot,
+        sun_entity_id="sun.sun",
+        open_position=100,
+        current_datetime=datetime(2026, 10, 11, 9, 5, tzinfo=timezone.utc),
+        morning_open_grace_minutes=10,
+        morning_open_weekend_time="09:00",
+        valid_cover_ids={"cover.amelie_fenster"},
+        presence_entity_id="binary_sensor.resident_home",
+        presence_home_values={"home", "on", "present"},
+        presence_blocks_morning_open_for={"cover.amelie_fenster"},
+    )
+
+    assert decision is not None
+    assert decision.rule_id == "R-ASTRO-002"
+
+
 def test_lux_shading_in_moves_non_terrace_cover_to_shading_position() -> None:
     snapshot = StateSnapshot(
         {

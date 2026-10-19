@@ -7,6 +7,7 @@ so validation can be reused in unit tests and standalone tooling.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any, Protocol
 
 from .const import (
@@ -29,6 +30,7 @@ from .const import (
     CONF_LUX_WZ_ENTITY_ID,
     CONF_MANUAL_BLOCK_SECONDS,
     CONF_MIN_TEMP_C,
+    CONF_MORNING_OPEN_WEEKEND_TIME,
     CONF_NAME,
     CONF_OUTDOOR_TEMP_ENTITY_ID,
     CONF_PARTY_MODE_ENTITY_ID,
@@ -99,6 +101,7 @@ class CoverConfig:
     shading: ShadingConfig
     close_position: int = DEFAULT_CLOSE_POSITION
     shading_position: int = DEFAULT_SHADING_POSITION
+    morning_open_weekend_time: str | None = None
 
     def __post_init__(self) -> None:
         if not self.entity_id:
@@ -109,6 +112,7 @@ class CoverConfig:
             )
         _ensure_pct_range(self.close_position, "close_position")
         _ensure_pct_range(self.shading_position, "shading_position")
+        _ensure_optional_time_hhmm(self.morning_open_weekend_time, "morning_open_weekend_time")
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,6 +178,11 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
             f"covers[{index}]",
             default=DEFAULT_SHADING_POSITION,
         )
+        morning_open_weekend_time = _optional_time_hhmm(
+            item.get(CONF_MORNING_OPEN_WEEKEND_TIME),
+            f"covers[{index}]",
+            CONF_MORNING_OPEN_WEEKEND_TIME,
+        )
         thresholds = ThresholdConfig(
             min_temp_c=_optional_float(item.get(CONF_MIN_TEMP_C)),
             lux_enter=_require_float(item, CONF_LUX_ENTER, f"covers[{index}]"),
@@ -196,6 +205,7 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
                 scale=scale,
                 close_position=close_position,
                 shading_position=shading_position,
+                morning_open_weekend_time=morning_open_weekend_time,
                 shading=shading,
             )
         )
@@ -321,3 +331,29 @@ def _ensure_pct_range(value: int, field_name: str) -> None:
     """Ensure per-cover target positions use normalized 0..100 range."""
     if value < 0 or value > 100:
         raise ConfigValidationError(f"{field_name} must be in range [0, 100]")
+
+
+_HHMM_PATTERN = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
+
+
+def _optional_time_hhmm(value: Any, section: str, key: str) -> str | None:
+    """Read optional HH:MM time field and normalize it."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfigValidationError(f"{section}.{key} must be a string in HH:MM format")
+
+    candidate = value.strip()
+    if not candidate:
+        return None
+    if _HHMM_PATTERN.fullmatch(candidate) is None:
+        raise ConfigValidationError(f"{section}.{key} must be in HH:MM format")
+    return candidate
+
+
+def _ensure_optional_time_hhmm(value: str | None, field_name: str) -> None:
+    """Validate optional HH:MM values for dataclass-level safety."""
+    if value is None:
+        return
+    if _HHMM_PATTERN.fullmatch(value) is None:
+        raise ConfigValidationError(f"{field_name} must be in HH:MM format")

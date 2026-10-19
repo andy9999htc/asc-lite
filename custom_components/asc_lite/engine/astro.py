@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from typing import Any
 
 from .state import StateSnapshot
@@ -37,6 +37,7 @@ def evaluate_astro_rule(
     current_datetime: datetime | None = None,
     morning_open_grace_minutes: int = _DEFAULT_MORNING_OPEN_GRACE_MINUTES,
     evening_close_grace_minutes: int = _DEFAULT_EVENING_CLOSE_GRACE_MINUTES,
+    morning_open_weekend_time: str | None = None,
 ) -> Decision | None:
     """Return an astro close/open decision based on sunrise and sunset windows.
 
@@ -69,6 +70,7 @@ def evaluate_astro_rule(
         sun_entity_id,
         current_datetime=current_datetime,
         morning_open_grace_minutes=morning_open_grace_minutes,
+        morning_open_weekend_time=morning_open_weekend_time,
     ):
         _LOGGER.debug(
             "ASC Lite astro morning open skipped: cover=%s current_datetime=%s grace_minutes=%s reason=outside_morning_window",
@@ -112,13 +114,22 @@ def _is_within_morning_window(
     *,
     current_datetime: datetime | None,
     morning_open_grace_minutes: int,
+    morning_open_weekend_time: str | None,
 ) -> bool:
-    """Allow morning-open from sunrise through sunrise plus grace minutes."""
+    """Allow morning-open from weekend fixed time or sunrise through grace minutes."""
     if current_datetime is None:
         return False
 
     if morning_open_grace_minutes < 0:
         morning_open_grace_minutes = 0
+
+    weekend_anchor = _resolve_weekend_morning_anchor(
+        current_datetime,
+        morning_open_weekend_time,
+    )
+    if weekend_anchor is not None:
+        cutoff = weekend_anchor + timedelta(minutes=morning_open_grace_minutes)
+        return weekend_anchor <= current_datetime <= cutoff
 
     next_rising = _read_next_rising(snapshot, sun_entity_id)
     if next_rising is None:
@@ -137,6 +148,28 @@ def _is_within_morning_window(
 
     cutoff = sunrise_anchor + timedelta(minutes=morning_open_grace_minutes)
     return sunrise_anchor <= current_datetime <= cutoff
+
+
+def _resolve_weekend_morning_anchor(
+    current_datetime: datetime,
+    morning_open_weekend_time: str | None,
+) -> datetime | None:
+    """Return today's weekend morning anchor if a fixed weekend time is configured."""
+    if morning_open_weekend_time is None:
+        return None
+
+    if current_datetime.weekday() < 5:
+        return None
+
+    parsed_time = _parse_hhmm(morning_open_weekend_time)
+    if parsed_time is None:
+        _LOGGER.warning(
+            "ASC Lite astro ignored invalid weekend morning time: value=%s",
+            morning_open_weekend_time,
+        )
+        return None
+
+    return datetime.combine(current_datetime.date(), parsed_time, tzinfo=current_datetime.tzinfo)
 
 
 def _is_within_evening_window(
@@ -228,6 +261,14 @@ def _parse_timestamp(raw_value: Any) -> datetime | None:
         except ValueError:
             return None
     return None
+
+
+def _parse_hhmm(raw_value: str) -> time | None:
+    """Parse HH:MM 24h time values."""
+    try:
+        return time.fromisoformat(raw_value)
+    except ValueError:
+        return None
 
 
 def _read_elevation(snapshot: StateSnapshot, sun_entity_id: str) -> float | None:

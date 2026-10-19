@@ -23,7 +23,7 @@ Use this fixed order for every evaluation cycle:
 | R-MAN-002 | Manual block active | decision in `{R-LUX-001, R-LUX-002, R-ASTRO-002}` | none | Skip dispatch for this shutter | `MANUAL_BLOCK_ACTIVE` | 3 |
 | R-PRES-002 | presence in `{away, off, absent}` | shutter in `{amelie_fenster, amelie_tuer, schlafzimmer_fenster, schlafzimmer_tuer}` | manual block (dispatch-time) | Open even if normal morning open is not configured | `PRESENCE_AWAY_FORCED_OPEN` | 4 |
 | R-ASTRO-001 | current time in sunset window | auto enabled | terrace blockers by precedence (`R-PARTY-001`), once/day runtime guard | Move to configured close position | `ASTRO_EVENING_CLOSE` | 5 |
-| R-ASTRO-002 | current time in sunrise window | auto enabled | presence=home for kids, manual block (dispatch-time), terrace blockers by precedence (`R-PARTY-001`), once/day runtime guard | Move to open position (100) | `ASTRO_MORNING_OPEN` | 5 |
+| R-ASTRO-002 | current time in morning-open window (weekend fixed time if configured, otherwise sunrise window) | auto enabled | presence=home for kids, manual block (dispatch-time), terrace blockers by precedence (`R-PARTY-001`), once/day runtime guard | Move to open position (100) | `ASTRO_MORNING_OPEN` | 5 |
 | R-LUX-001 | lux >= enter threshold | sun in azimuth/elevation range, temp gate pass, shutter is not terrace | manual block (dispatch-time) | Move to shading position | `LUX_SHADING_IN` | 6 |
 | R-LUX-002 | lux <= exit threshold while currently shaded | shutter is not terrace | manual block (dispatch-time) | Return to day/open profile | `LUX_SHADING_OUT` | 6 |
 
@@ -31,7 +31,7 @@ Use this fixed order for every evaluation cycle:
 
 | Guard | Definition |
 | --- | --- |
-| Morning up allowed (`R-ASTRO-002`) | `current_datetime` in `[sun.next_rising, sun.next_rising + 10 minutes]` (with sunrise anchor correction when HA already points `next_rising` to tomorrow) |
+| Morning up allowed (`R-ASTRO-002`) | Weekdays: `current_datetime` in `[sun.next_rising, sun.next_rising + 10 minutes]` (with sunrise anchor correction when HA already points `next_rising` to tomorrow). Weekends: if cover has `morning_open_weekend_time`, use `[fixed_time, fixed_time + 10 minutes]` in local time. |
 | Evening down allowed (`R-ASTRO-001`) | `current_datetime` in `[sun.next_setting, sun.next_setting + 10 minutes]` (with sunset anchor correction when HA already points `next_setting` to tomorrow) |
 | Outside window | astro rule does not match in that cycle |
 

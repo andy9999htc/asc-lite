@@ -334,6 +334,7 @@ class ASCLiteCoordinator:
             snapshot,
             sun_entity_id=self.config.sun_entity_id,
             close_position=cover.close_position,
+            morning_open_weekend_time=cover.morning_open_weekend_time,
             current_datetime=datetime.now().astimezone(),
             current_position=_effective_cover_position_pct(
                 snapshot,

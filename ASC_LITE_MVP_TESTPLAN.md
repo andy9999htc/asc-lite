@@ -41,6 +41,8 @@ Secondary verification shutters (after pilot):
 | ID | Scenario | Steps | Expected |
 | --- | --- | --- | --- |
 | T-001 | Morning astro open | Simulate/await civil dawn in up window | Shutter opens to configured open pos; reason `astro_morning_open` |
+| T-001A | Weekend fixed morning open (08:00 group) | Configure `morning_open_weekend_time=08:00` for WZ/EZ and evaluate Saturday/Sunday at 08:00..08:10 | WZ/EZ shutters open in weekend slot; reason `astro_morning_open` |
+| T-001B | Weekend fixed morning open with kids presence guard | Configure `morning_open_weekend_time=09:00` for kids/bedroom and evaluate Saturday/Sunday at 09:00..09:10 with presence `home` then `away` | Presence `home`: blocked for kids/bedroom; presence `away`: opens with `astro_morning_open` |
 | T-002 | Evening astro close | Simulate sun elevation crossing -6 in down window | Shutter closes to configured closed pos; reason `astro_evening_close` |
 | T-003 | Up window guard | Trigger open outside up window | Command suppressed; reason `outside_time_window` |
 | T-004 | Down window guard | Trigger close outside down window | Command suppressed; reason `outside_time_window` |
