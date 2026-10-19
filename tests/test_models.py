@@ -40,6 +40,7 @@ def valid_entry() -> FakeEntry:
                     "name": "Wohnzimmer",
                     "scale": 100,
                     "morning_open_weekend_time": "08:00",
+                    "presence_managed": True,
                     "azimuth_min": 120,
                     "azimuth_max": 260,
                     "elevation_min": 10,
@@ -62,15 +63,18 @@ def test_build_runtime_config_success(valid_entry: FakeEntry) -> None:
     assert len(cfg.covers) == 1
     assert cfg.covers[0].scale == 100
     assert cfg.covers[0].morning_open_weekend_time == "08:00"
+    assert cfg.covers[0].presence_managed is True
 
 
 def test_cover_position_defaults_applied_when_omitted(valid_entry: FakeEntry) -> None:
     valid_entry.data["covers"][0].pop("morning_open_weekend_time")
+    valid_entry.data["covers"][0].pop("presence_managed")
     cfg = build_runtime_config(valid_entry)
     cover = cfg.covers[0]
     assert cover.close_position == 0
     assert cover.shading_position == 35
     assert cover.morning_open_weekend_time is None
+    assert cover.presence_managed is False
 
 
 def test_cover_position_overrides_applied_from_config(valid_entry: FakeEntry) -> None:
@@ -95,6 +99,13 @@ def test_weekend_time_valid_values_accepted(valid_entry: FakeEntry, value: str) 
 @pytest.mark.parametrize("value", ["8:00", "24:00", "09:60", "abc"])
 def test_weekend_time_invalid_values_rejected(valid_entry: FakeEntry, value: str) -> None:
     valid_entry.data["covers"][0]["morning_open_weekend_time"] = value
+
+    with pytest.raises(ConfigValidationError):
+        build_runtime_config(valid_entry)
+
+
+def test_presence_managed_requires_boolean(valid_entry: FakeEntry) -> None:
+    valid_entry.data["covers"][0]["presence_managed"] = "true"
 
     with pytest.raises(ConfigValidationError):
         build_runtime_config(valid_entry)

@@ -38,12 +38,6 @@ from .logging import log_decision
 from .models import CoverConfig, GlobalConfig
 
 _UPDATE_INTERVAL = timedelta(seconds=30)
-_FORCED_OPEN_SUFFIXES = (
-    "amelie_fenster",
-    "amelie_tuer",
-    "schlafzimmer_fenster",
-    "schlafzimmer_tuer",
-)
 _MANUAL_BLOCK_REASON = "MANUAL_BLOCK_ACTIVE"
 _SUPPRESSED_BY_MANUAL_RULES = {
     "R-LUX-001",
@@ -313,12 +307,12 @@ class ASCLiteCoordinator:
         forced_open_ids = {
             item.entity_id
             for item in self.config.covers
-            if _is_forced_open_cover(item.entity_id)
+            if item.presence_managed
         }
         kids_cover_ids = {
             item.entity_id
             for item in self.config.covers
-            if _is_forced_open_cover(item.entity_id)
+            if item.presence_managed
         }
         presence_decision = evaluate_presence_rule(
             cover_id,
@@ -516,11 +510,6 @@ def _is_truthy(value: Any) -> bool:
 def _is_terrace_cover(entity_id: str, name: str) -> bool:
     marker = f"{entity_id} {name}".lower()
     return "terrasse" in marker or "terrace" in marker
-
-
-def _is_forced_open_cover(entity_id: str) -> bool:
-    lowered = entity_id.lower()
-    return any(lowered.endswith(suffix) for suffix in _FORCED_OPEN_SUFFIXES)
 
 
 def _resolve_lux_entity_id(config: GlobalConfig, cover_id: str) -> str | None:

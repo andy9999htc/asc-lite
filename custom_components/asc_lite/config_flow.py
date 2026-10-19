@@ -358,6 +358,7 @@ def _default_covers_json() -> str:
                 "close_position": 0,
                 "shading_position": 35,
                 "morning_open_weekend_time": "08:00",
+                "presence_managed": False,
                 "azimuth_min": 120,
                 "azimuth_max": 260,
                 "elevation_min": 10,

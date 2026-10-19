@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from custom_components.asc_lite.coordinator import (
     ASCLiteCoordinator,
-    _is_forced_open_cover,
     _is_terrace_cover,
 )
 from custom_components.asc_lite.engine.types import Decision
@@ -55,12 +54,19 @@ class FakeEntry:
     entry_id: str
 
 
-def _cover(entity_id: str, name: str, weekend_time: str | None = None) -> CoverConfig:
+def _cover(
+    entity_id: str,
+    name: str,
+    weekend_time: str | None = None,
+    *,
+    presence_managed: bool = False,
+) -> CoverConfig:
     return CoverConfig(
         entity_id=entity_id,
         name=name,
         scale=100,
         morning_open_weekend_time=weekend_time,
+        presence_managed=presence_managed,
         shading=ShadingConfig(
             azimuth_min=90,
             azimuth_max=180,
@@ -91,7 +97,12 @@ def _config() -> GlobalConfig:
         covers=(
             _cover("cover.rollladen_terrasse", "Terrasse", "08:00"),
             _cover("cover.rollladen_wohnzimmer", "Wohnzimmer", "08:00"),
-            _cover("cover.rollladen_amelie_fenster", "Amelie Fenster", "09:00"),
+            _cover(
+                "cover.rollladen_amelie_fenster",
+                "Amelie Fenster",
+                "09:00",
+                presence_managed=True,
+            ),
         ),
     )
 
@@ -99,8 +110,14 @@ def _config() -> GlobalConfig:
 def test_cover_classification_helpers_match_contract() -> None:
     assert _is_terrace_cover("cover.rollladen_terrasse", "Terrasse") is True
     assert _is_terrace_cover("cover.rollladen_wohnzimmer", "Wohnzimmer") is False
-    assert _is_forced_open_cover("cover.rollladen_amelie_fenster") is True
-    assert _is_forced_open_cover("cover.rollladen_wohnzimmer") is False
+
+
+def test_presence_managed_flag_marks_forced_open_covers() -> None:
+    config = _config()
+
+    managed = {cover.entity_id for cover in config.covers if cover.presence_managed}
+
+    assert managed == {"cover.rollladen_amelie_fenster"}
 
 
 def test_auto_disabled_sets_suppressed_runtime_decision(asyncio_run) -> None:

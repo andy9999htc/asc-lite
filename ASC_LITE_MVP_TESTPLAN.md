@@ -42,7 +42,7 @@ Secondary verification shutters (after pilot):
 | --- | --- | --- | --- |
 | T-001 | Morning astro open | Simulate/await civil dawn in up window | Shutter opens to configured open pos; reason `astro_morning_open` |
 | T-001A | Weekend fixed morning open (08:00 group) | Configure `morning_open_weekend_time=08:00` for WZ/EZ and evaluate Saturday/Sunday at 08:00..08:10 | WZ/EZ shutters open in weekend slot; reason `astro_morning_open` |
-| T-001B | Weekend fixed morning open with kids presence guard | Configure `morning_open_weekend_time=09:00` for kids/bedroom and evaluate Saturday/Sunday at 09:00..09:10 with presence `home` then `away` | Presence `home`: blocked for kids/bedroom; presence `away`: opens with `astro_morning_open` |
+| T-001B | Weekend fixed morning open with presence guard | Configure `morning_open_weekend_time=09:00` and `presence_managed=true` for selected covers and evaluate Saturday/Sunday at 09:00..09:10 with presence `home` then `away` | Presence `home`: blocked for `presence_managed=true` covers; presence `away`: opens with `astro_morning_open` |
 | T-002 | Evening astro close | Simulate sun elevation crossing -6 in down window | Shutter closes to configured closed pos; reason `astro_evening_close` |
 | T-003 | Up window guard | Trigger open outside up window | Command suppressed; reason `outside_time_window` |
 | T-004 | Down window guard | Trigger close outside down window | Command suppressed; reason `outside_time_window` |
@@ -55,7 +55,7 @@ Secondary verification shutters (after pilot):
 | T-011 | Terrace resume | Close terrace window sensor | Normal rule processing resumes |
 | T-012 | Lux shading in | Raise lux above entry threshold with valid azimuth/elevation | Move to shading pos on non-terrace shutters only; reason `lux_shading_in` |
 | T-013 | Lux shading out | Drop lux below exit threshold | Return from shading; reason `lux_shading_out` |
-| T-014 | Presence away forced open set | Switch presence to away | Amelie + Schlafzimmer (Fenster/Tuer) open even if normal morning open would not occur |
+| T-014 | Presence away forced open set | Switch presence to away | Covers with `presence_managed=true` open even if normal morning open would not occur |
 | T-015 | Presence home reaction | Switch presence to home | Presence policy action according to mode/time window |
 | T-021 | Scale mapping 0..10 covers | Execute open/close/shade on EZ covers | Commands correctly denormalized to 0..10 range |
 | T-022 | Global inversion behavior | Toggle global inversion in options and test one open/close cycle | All 9 shutters react consistently inverted/non-inverted |

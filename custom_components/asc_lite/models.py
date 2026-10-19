@@ -34,6 +34,7 @@ from .const import (
     CONF_NAME,
     CONF_OUTDOOR_TEMP_ENTITY_ID,
     CONF_PARTY_MODE_ENTITY_ID,
+    CONF_PRESENCE_MANAGED,
     CONF_PRESENCE_ENTITY_ID,
     CONF_SHADING_POSITION,
     CONF_SUN_ENTITY_ID,
@@ -102,6 +103,7 @@ class CoverConfig:
     close_position: int = DEFAULT_CLOSE_POSITION
     shading_position: int = DEFAULT_SHADING_POSITION
     morning_open_weekend_time: str | None = None
+    presence_managed: bool = False
 
     def __post_init__(self) -> None:
         if not self.entity_id:
@@ -113,6 +115,8 @@ class CoverConfig:
         _ensure_pct_range(self.close_position, "close_position")
         _ensure_pct_range(self.shading_position, "shading_position")
         _ensure_optional_time_hhmm(self.morning_open_weekend_time, "morning_open_weekend_time")
+        if not isinstance(self.presence_managed, bool):
+            raise ConfigValidationError("presence_managed must be a boolean")
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,6 +187,12 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
             f"covers[{index}]",
             CONF_MORNING_OPEN_WEEKEND_TIME,
         )
+        presence_managed = _optional_bool_with_default(
+            item,
+            CONF_PRESENCE_MANAGED,
+            f"covers[{index}]",
+            default=False,
+        )
         thresholds = ThresholdConfig(
             min_temp_c=_optional_float(item.get(CONF_MIN_TEMP_C)),
             lux_enter=_require_float(item, CONF_LUX_ENTER, f"covers[{index}]"),
@@ -206,6 +216,7 @@ def build_runtime_config(entry: EntryLike) -> GlobalConfig:
                 close_position=close_position,
                 shading_position=shading_position,
                 morning_open_weekend_time=morning_open_weekend_time,
+                presence_managed=presence_managed,
                 shading=shading,
             )
         )
@@ -325,6 +336,16 @@ def _optional_int_with_default(
     if isinstance(value, float) and value.is_integer():
         return int(value)
     raise ConfigValidationError(f"{section}.{key} must be an integer")
+
+
+def _optional_bool_with_default(
+    data: dict[str, Any], key: str, section: str, *, default: bool
+) -> bool:
+    """Read optional bool field with default fallback."""
+    value = data.get(key, default)
+    if not isinstance(value, bool):
+        raise ConfigValidationError(f"{section}.{key} must be a boolean")
+    return value
 
 
 def _ensure_pct_range(value: int, field_name: str) -> None:

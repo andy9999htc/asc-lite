@@ -133,6 +133,7 @@ def build_entry_from_env() -> FakeEntry:
                 "name": "Wohnzimmer",
                 "scale": 100,
                 "morning_open_weekend_time": "08:00",
+                "presence_managed": False,
                 "azimuth_min": 120,
                 "azimuth_max": 260,
                 "elevation_min": 10,

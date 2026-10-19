@@ -11,6 +11,11 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 
 ## Changelog
 
+### v0.6.18
+
+- Replaced hardcoded kids/bedroom suffix detection with explicit per-cover config flag `presence_managed` for presence-away forced-open and morning-open blocking.
+- Added model and coordinator regression coverage for config-driven presence-managed cover selection.
+
 ### v0.6.17
 
 - Added optional per-cover weekend morning open time (`morning_open_weekend_time`, format `HH:MM`).
@@ -172,7 +177,7 @@ ASC-lite is a focused Home Assistant integration that implements the required su
 - Runtime remains backward-compatible with `sun.next_rising` / `sun.next_setting` snapshots.
 - Astro open/close decisions are executed once per day per cover and per astro rule in runtime.
 - The only functional blockers are:
-  - Presence blocker for configured kids shutters in morning open (`presence=home` blocks `R-ASTRO-002`).
+  - Presence blocker for covers with `presence_managed=true` in morning open (`presence=home` blocks `R-ASTRO-002`).
   - Party precedence behavior for terrace shutters (handled by `R-PARTY-001` before astro).
 
 Detailed rule matrix and precedence are documented in `ASC_LITE_DECISION_TABLE.md`.
@@ -263,6 +268,7 @@ Each cover object supports:
 - close_position (0..100, default 0)
 - shading_position (0..100, default 35)
 - morning_open_weekend_time (optional `HH:MM`, local time, used only on Saturday/Sunday)
+- presence_managed (optional bool, default `false`; enables presence-away forced-open and presence-home morning-open blocker for that cover)
 - azimuth_min
 - azimuth_max
 - elevation_min
@@ -283,6 +289,7 @@ Example:
     "close_position": 0,
     "shading_position": 35,
     "morning_open_weekend_time": "08:00",
+    "presence_managed": false,
     "azimuth_min": 120,
     "azimuth_max": 260,
     "elevation_min": 10,
@@ -299,6 +306,7 @@ Example:
     "close_position": 0,
     "shading_position": 40,
     "morning_open_weekend_time": "08:00",
+    "presence_managed": false,
     "azimuth_min": 110,
     "azimuth_max": 255,
     "elevation_min": 8,
@@ -311,7 +319,7 @@ Example:
 ]
 ```
 
-For kids/bedroom covers, set `morning_open_weekend_time` to `09:00` when you want a later weekend slot while still keeping the presence-home blocker.
+For kids/bedroom covers, set `presence_managed` to `true` and use `morning_open_weekend_time` (for example `09:00`) when you want a later weekend slot while still keeping the presence-home blocker.
 
 ## Testing
 
